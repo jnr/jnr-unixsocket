@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2009 Wayne Meissner
- *
- * This file is part of java native runtime.
+ * This file is part of the JNR project (http://jnr.kenai.com)
  *
  * This code is free software: you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License version 3 only, as
