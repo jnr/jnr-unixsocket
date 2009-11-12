@@ -18,6 +18,8 @@ package com.kenai.jnr.unixsocket;
 
 import com.kenai.constantine.platform.ProtocolFamily;
 import com.kenai.constantine.platform.Sock;
+import com.kenai.constantine.platform.SocketLevel;
+import com.kenai.constantine.platform.SocketOption;
 import com.kenai.jaffl.LastError;
 import com.kenai.jaffl.Library;
 import com.kenai.jaffl.Platform;
@@ -26,6 +28,8 @@ import com.kenai.jaffl.annotations.Out;
 import com.kenai.jaffl.annotations.Transient;
 import com.kenai.jaffl.byref.IntByReference;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 class Native {
     static final String[] libnames = Platform.getPlatform().getOS() == Platform.OS.SOLARIS
@@ -46,6 +50,8 @@ class Native {
         int getpeername(int fd, @Out SockAddrUnix addr, @In @Out IntByReference len);
         int socketpair(int domain, int type, int protocol, @Out int[] sv);
         int fcntl(int fd, int cmd, int data);
+        int getsockopt(int s, int level, int optname, @Out ByteBuffer optval, @In @Out IntByReference optlen);
+        int setsockopt(int s, int level, int optname, @In ByteBuffer optval, int optlen);
         String strerror(int error);
     }
 
@@ -104,5 +110,12 @@ class Native {
             flags |= LibC.O_NONBLOCK;
         }
         libc().fcntl(fd, LibC.F_SETFL, flags);
+    }
+
+    public static int setsockopt(int s, SocketLevel level, SocketOption optname, boolean optval) {
+        ByteBuffer buf = ByteBuffer.allocate(4);
+        buf.order(ByteOrder.BIG_ENDIAN);
+        buf.putInt(optval ? 1 : 0).flip();
+        return libsocket().setsockopt(s, level.value(), optname.value(), buf, buf.remaining());
     }
 }

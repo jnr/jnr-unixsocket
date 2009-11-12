@@ -16,7 +16,12 @@
 
 package com.kenai.jnr.unixsocket;
 
+import com.kenai.constantine.platform.SocketLevel;
+import com.kenai.constantine.platform.SocketOption;
+import com.kenai.jaffl.byref.IntByReference;
 import com.kenai.jnr.enxio.channels.NativeSocketChannel;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.channels.Channel;
 
 public class UnixSocket {
@@ -28,5 +33,19 @@ public class UnixSocket {
 
     public final Channel getChannel() {
         return channel;
+    }
+
+    public final void setKeepAlive(boolean on) {
+        Native.setsockopt(channel.getFD(), SocketLevel.SOL_SOCKET, SocketOption.SO_KEEPALIVE, on);
+    }
+
+    public final boolean getKeepAlive() {
+        ByteBuffer buf = ByteBuffer.allocate(4);
+        buf.order(ByteOrder.BIG_ENDIAN);
+        IntByReference ref = new IntByReference(4);
+
+        Native.libsocket().getsockopt(channel.getFD(), SocketLevel.SOL_SOCKET.value(), SocketOption.SO_KEEPALIVE.value(), buf, ref);
+
+        return buf.getInt(0) != 0;
     }
 }
