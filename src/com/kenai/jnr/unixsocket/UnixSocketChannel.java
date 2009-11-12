@@ -50,6 +50,15 @@ public class UnixSocketChannel extends NativeSocketChannel {
         return channel;
     }
 
+    public static final UnixSocketChannel[] pair() throws IOException {
+        int[] sockets = { -1, -1 };
+        Native.socketpair(ProtocolFamily.PF_UNIX, Sock.SOCK_STREAM, 0, sockets);
+        return new UnixSocketChannel[] {
+            new UnixSocketChannel(sockets[0], SelectionKey.OP_READ | SelectionKey.OP_WRITE),
+            new UnixSocketChannel(sockets[1], SelectionKey.OP_READ | SelectionKey.OP_WRITE)
+        };
+    }
+
     private UnixSocketChannel() throws IOException {
         super(Native.socket(ProtocolFamily.PF_UNIX, Sock.SOCK_STREAM, 0),
                 SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE);

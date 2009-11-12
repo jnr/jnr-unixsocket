@@ -44,6 +44,7 @@ class Native {
         int connect(int s, @In @Transient SockAddrUnix name, int namelen);
         int getsockname(int fd, @Out SockAddrUnix addr, @In @Out IntByReference len);
         int getpeername(int fd, @Out SockAddrUnix addr, @In @Out IntByReference len);
+        int socketpair(int domain, int type, int protocol, @Out int[] sv);
         int fcntl(int fd, int cmd, int data);
         String strerror(int error);
     }
@@ -62,6 +63,13 @@ class Native {
             throw new IOException(getLastErrorString());
         }
         return fd;
+    }
+
+    static int socketpair(ProtocolFamily domain, Sock type, int protocol, int[] sv) throws IOException {
+        if (libsocket().socketpair(domain.value(), type.value(), protocol, sv) < 0) {
+            throw new IOException("socketpair(2) failed " + Native.getLastErrorString());
+        }
+        return 0;
     }
 
     static int listen(int fd, int backlog) {
