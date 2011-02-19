@@ -14,14 +14,11 @@
  * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.kenai.jnr.unixsocket;
+package jnr.unixsocket;
 
 import com.kenai.constantine.platform.ProtocolFamily;
 import com.kenai.jaffl.Platform;
 import com.kenai.jaffl.struct.Struct;
-import com.kenai.jaffl.struct.Struct.UTF8String;
-import com.kenai.jaffl.struct.Struct.Unsigned16;
-import com.kenai.jaffl.struct.Struct.Unsigned8;
 
 /**
  * Native unix domain socket address structure.

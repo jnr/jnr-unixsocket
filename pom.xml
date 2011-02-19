@@ -71,6 +71,12 @@
       <version>0.7</version>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>org.jruby.extras</groupId>
+      <artifactId>jnr-enxio</artifactId>
+      <version>0.1</version>
+      <scope>compile</scope>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
@@ -91,7 +97,4 @@
       </extension>
     </extensions>
   </build>
-  <reporting>
-    <outputDirectory>build/report</outputDirectory>
-  </reporting>
 </project>

@@ -14,7 +14,7 @@
  * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.kenai.jnr.unixsocket;
+package jnr.unixsocket;
 
 import java.io.IOException;
 import java.net.SocketAddress;

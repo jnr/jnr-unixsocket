@@ -1,8 +1,8 @@
 
 package example;
 
-import com.kenai.jnr.unixsocket.UnixSocketAddress;
-import com.kenai.jnr.unixsocket.UnixSocketChannel;
+import jnr.unixsocket.UnixSocketAddress;
+import jnr.unixsocket.UnixSocketChannel;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;

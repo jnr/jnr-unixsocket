@@ -1,10 +1,10 @@
 
 package example;
 
-import com.kenai.jnr.unixsocket.UnixServerSocket;
-import com.kenai.jnr.unixsocket.UnixServerSocketChannel;
-import com.kenai.jnr.unixsocket.UnixSocketAddress;
-import com.kenai.jnr.unixsocket.UnixSocketChannel;
+import jnr.unixsocket.UnixServerSocket;
+import jnr.unixsocket.UnixServerSocketChannel;
+import jnr.unixsocket.UnixSocketAddress;
+import jnr.unixsocket.UnixSocketChannel;
 import com.kenai.jnr.enxio.channels.NativeSelectorProvider;
 import java.io.IOException;
 import java.nio.ByteBuffer;

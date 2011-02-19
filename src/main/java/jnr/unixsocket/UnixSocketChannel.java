@@ -14,14 +14,14 @@
  * version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.kenai.jnr.unixsocket;
+package jnr.unixsocket;
 
 import com.kenai.constantine.platform.Errno;
 import com.kenai.constantine.platform.ProtocolFamily;
 import com.kenai.constantine.platform.Sock;
 import com.kenai.jaffl.LastError;
 import com.kenai.jaffl.byref.IntByReference;
-import com.kenai.jnr.enxio.channels.NativeSocketChannel;
+import jnr.enxio.channels.NativeSocketChannel;
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
 
