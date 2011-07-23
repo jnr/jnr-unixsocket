@@ -1,5 +1,5 @@
 
-package example;
+package jnr.unixsocket.example;
 
 import jnr.unixsocket.UnixSocketAddress;
 import jnr.unixsocket.UnixSocketChannel;
@@ -8,6 +8,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.nio.CharBuffer;
 import java.nio.channels.Channels;
+import jnr.unixsocket.UnixSocketAddress;
+import jnr.unixsocket.UnixSocketChannel;
 
 public class UnixClient {
     public static final void main(String[] args) throws IOException {

@@ -1,11 +1,11 @@
 
-package example;
+package jnr.unixsocket.example;
 
 import jnr.unixsocket.UnixServerSocket;
 import jnr.unixsocket.UnixServerSocketChannel;
 import jnr.unixsocket.UnixSocketAddress;
 import jnr.unixsocket.UnixSocketChannel;
-import com.kenai.jnr.enxio.channels.NativeSelectorProvider;
+import jnr.enxio.channels.NativeSelectorProvider;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -13,6 +13,10 @@ import java.nio.channels.Selector;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import jnr.unixsocket.UnixServerSocket;
+import jnr.unixsocket.UnixServerSocketChannel;
+import jnr.unixsocket.UnixSocketAddress;
+import jnr.unixsocket.UnixSocketChannel;
 
 public class UnixServer {
 
