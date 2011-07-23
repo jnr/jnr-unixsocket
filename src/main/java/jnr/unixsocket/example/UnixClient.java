@@ -1,8 +1,6 @@
 
 package jnr.unixsocket.example;
 
-import jnr.unixsocket.UnixSocketAddress;
-import jnr.unixsocket.UnixSocketChannel;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -12,7 +10,7 @@ import jnr.unixsocket.UnixSocketAddress;
 import jnr.unixsocket.UnixSocketChannel;
 
 public class UnixClient {
-    public static final void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException {
         java.io.File path = new java.io.File("/tmp/fubar.sock");
         String data = "blah blah";
         UnixSocketAddress address = new UnixSocketAddress(path);

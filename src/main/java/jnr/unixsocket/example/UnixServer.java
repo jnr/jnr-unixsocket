@@ -1,10 +1,6 @@
 
 package jnr.unixsocket.example;
 
-import jnr.unixsocket.UnixServerSocket;
-import jnr.unixsocket.UnixServerSocketChannel;
-import jnr.unixsocket.UnixSocketAddress;
-import jnr.unixsocket.UnixSocketChannel;
 import jnr.enxio.channels.NativeSelectorProvider;
 import java.io.IOException;
 import java.nio.ByteBuffer;
