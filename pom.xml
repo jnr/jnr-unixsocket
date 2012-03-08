@@ -60,21 +60,21 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.jruby.extras</groupId>
-      <artifactId>jaffl</artifactId>
-      <version>0.5.9</version>
+      <groupId>com.github.jnr</groupId>
+      <artifactId>jnr-jffi</artifactId>
+      <version>0.6.1-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.jruby.extras</groupId>
+      <groupId>com.github.jnr</groupId>
       <artifactId>jnr-constants</artifactId>
-      <version>0.8</version>
+      <version>0.8.3-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.jruby.extras</groupId>
+      <groupId>com.github.jnr</groupId>
       <artifactId>jnr-enxio</artifactId>
-      <version>0.1</version>
+      <version>0.2-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>
