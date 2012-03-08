@@ -18,23 +18,22 @@
 
 package jnr.unixsocket;
 
-import com.kenai.constantine.platform.ProtocolFamily;
-import com.kenai.constantine.platform.Sock;
-import com.kenai.constantine.platform.SocketLevel;
-import com.kenai.constantine.platform.SocketOption;
-import com.kenai.jaffl.LastError;
-import com.kenai.jaffl.Library;
-import com.kenai.jaffl.Platform;
-import com.kenai.jaffl.annotations.In;
-import com.kenai.jaffl.annotations.Out;
-import com.kenai.jaffl.annotations.Transient;
-import com.kenai.jaffl.byref.IntByReference;
+import jnr.constants.platform.ProtocolFamily;
+import jnr.constants.platform.Sock;
+import jnr.constants.platform.SocketLevel;
+import jnr.constants.platform.SocketOption;
+import jnr.ffi.*;
+import jnr.ffi.annotations.In;
+import jnr.ffi.annotations.Out;
+import jnr.ffi.annotations.Transient;
+import jnr.ffi.byref.IntByReference;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 class Native {
-    static final String[] libnames = Platform.getPlatform().getOS() == Platform.OS.SOLARIS
+    static final String[] libnames = Platform.getNativePlatform().getOS() == Platform.OS.SOLARIS
                         ? new String[] { "socket", "nsl", "c" }
                         : new String[] { "c" };
     public static interface LibC {
@@ -66,7 +65,7 @@ class Native {
     }
 
     static int socket(ProtocolFamily domain, Sock type, int protocol) throws IOException {
-        int fd = libsocket().socket(domain.value(), type.value(), protocol);
+        int fd = libsocket().socket(domain.intValue(), type.intValue(), protocol);
         if (fd < 0) {
             throw new IOException(getLastErrorString());
         }
@@ -74,7 +73,7 @@ class Native {
     }
 
     static int socketpair(ProtocolFamily domain, Sock type, int protocol, int[] sv) throws IOException {
-        if (libsocket().socketpair(domain.value(), type.value(), protocol, sv) < 0) {
+        if (libsocket().socketpair(domain.intValue(), type.intValue(), protocol, sv) < 0) {
             throw new IOException("socketpair(2) failed " + Native.getLastErrorString());
         }
         return 0;
@@ -97,7 +96,7 @@ class Native {
     }
 
     static String getLastErrorString() {
-        return strerror(LastError.getLastError());
+        return strerror(LastError.getLastError(jnr.ffi.Runtime.getSystemRuntime()));
     }
 
     static String strerror(int error) {
@@ -118,6 +117,6 @@ class Native {
         ByteBuffer buf = ByteBuffer.allocate(4);
         buf.order(ByteOrder.BIG_ENDIAN);
         buf.putInt(optval ? 1 : 0).flip();
-        return libsocket().setsockopt(s, level.value(), optname.value(), buf, buf.remaining());
+        return libsocket().setsockopt(s, level.intValue(), optname.intValue(), buf, buf.remaining());
     }
 }

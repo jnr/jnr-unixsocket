@@ -18,10 +18,11 @@
 
 package jnr.unixsocket;
 
-import com.kenai.constantine.platform.SocketLevel;
-import com.kenai.constantine.platform.SocketOption;
-import com.kenai.jaffl.byref.IntByReference;
+import jnr.constants.platform.SocketLevel;
+import jnr.constants.platform.SocketOption;
 import jnr.enxio.channels.NativeSocketChannel;
+import jnr.ffi.byref.IntByReference;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.Channel;
@@ -46,7 +47,7 @@ public class UnixSocket {
         buf.order(ByteOrder.BIG_ENDIAN);
         IntByReference ref = new IntByReference(4);
 
-        Native.libsocket().getsockopt(channel.getFD(), SocketLevel.SOL_SOCKET.value(), SocketOption.SO_KEEPALIVE.value(), buf, ref);
+        Native.libsocket().getsockopt(channel.getFD(), SocketLevel.SOL_SOCKET.intValue(), SocketOption.SO_KEEPALIVE.intValue(), buf, ref);
 
         return buf.getInt(0) != 0;
     }

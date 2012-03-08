@@ -18,12 +18,13 @@
 
 package jnr.unixsocket;
 
-import com.kenai.constantine.platform.Errno;
-import com.kenai.constantine.platform.ProtocolFamily;
-import com.kenai.constantine.platform.Sock;
-import com.kenai.jaffl.LastError;
-import com.kenai.jaffl.byref.IntByReference;
+import jnr.constants.platform.Errno;
+import jnr.constants.platform.ProtocolFamily;
+import jnr.constants.platform.Sock;
 import jnr.enxio.channels.NativeSocketChannel;
+import jnr.ffi.*;
+import jnr.ffi.byref.IntByReference;
+
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
 
@@ -80,7 +81,7 @@ public class UnixSocketChannel extends NativeSocketChannel {
 
     private final boolean doConnect(SockAddrUnix remote) throws IOException {
         if (Native.connect(getFD(), remote, remote.length()) != 0) {
-            Errno error = Errno.valueOf(LastError.getLastError());
+            Errno error = Errno.valueOf(LastError.getLastError(jnr.ffi.Runtime.getSystemRuntime()));
 
             switch (error) {
                 case EAGAIN:

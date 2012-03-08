@@ -18,10 +18,11 @@
 
 package jnr.unixsocket;
 
-import com.kenai.constantine.platform.ProtocolFamily;
-import com.kenai.constantine.platform.Sock;
-import com.kenai.jaffl.byref.IntByReference;
+import jnr.constants.platform.ProtocolFamily;
+import jnr.constants.platform.Sock;
 import jnr.enxio.channels.NativeServerSocketChannel;
+import jnr.ffi.byref.IntByReference;
+
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.spi.SelectorProvider;

@@ -19,8 +19,7 @@
 package jnr.unixsocket;
 
 import com.kenai.constantine.platform.ProtocolFamily;
-import com.kenai.jaffl.Platform;
-import com.kenai.jaffl.struct.Struct;
+import jnr.ffi.*;
 
 /**
  * Native unix domain socket address structure.
@@ -30,6 +29,10 @@ abstract class SockAddrUnix extends Struct {
     
     protected abstract UTF8String getPathField();
     protected abstract NumberField getFamilyField();
+
+    public SockAddrUnix() {
+        super(jnr.ffi.Runtime.getSystemRuntime());
+    }
 
     /**
      * Sets the protocol family of this unix socket address.
@@ -97,7 +100,7 @@ abstract class SockAddrUnix extends Struct {
     }
 
     private static final int strlen(UTF8String str) {
-        int end = str.getMemoryIO().indexOf(str.offset(), (byte) 0);
+        int end = str.getMemory().indexOf(str.offset(), (byte) 0);
         return end >= 0 ? end : str.length();
     }
     
