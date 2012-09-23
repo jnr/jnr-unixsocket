@@ -41,25 +41,25 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.5</version>
+      <version>4.8.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.github.jnr</groupId>
-      <artifactId>jffi</artifactId>
-      <version>1.2.4</version>
+      <artifactId>jnr-ffi</artifactId>
+      <version>0.7.7</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.github.jnr</groupId>
       <artifactId>jnr-constants</artifactId>
-      <version>0.8.3</version>
+      <version>0.8.4</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.github.jnr</groupId>
       <artifactId>jnr-enxio</artifactId>
-      <version>0.2-SNAPSHOT</version>
+      <version>0.2</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>
