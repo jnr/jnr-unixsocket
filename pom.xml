@@ -30,11 +30,6 @@
     <url>git@github.com:jnr/jnr-unixsocket.git</url>
   </scm>
 
-  <scm>
-    <connection>scm:git:http://github.com/jnr/jnr-unixsocket.git</connection>
-    <url>http://github.com/jnr/jnr-unixsocket</url>
-  </scm>
-
   <developers>
     <developer>
       <id>wmeissner</id>
