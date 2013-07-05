@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.util.Set;
+import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import jnr.unixsocket.UnixServerSocket;
@@ -30,11 +31,14 @@ public class UnixServer {
 
             while (sel.select() > 0) {
                 Set<SelectionKey> keys = sel.selectedKeys();
-                for (SelectionKey k : keys) {
+		Iterator<SelectionKey> iterator = keys.iterator();
+		while ( iterator.hasNext()  ) {
+		    SelectionKey k = iterator.next();
                     Actor a = (Actor) k.attachment();
                     if (!a.rxready()) {
                         k.cancel();
                     }
+		    iterator.remove();
                 }
             }
         } catch (IOException ex) {
