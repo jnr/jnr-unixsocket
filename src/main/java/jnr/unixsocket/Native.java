@@ -119,4 +119,12 @@ class Native {
         buf.putInt(optval ? 1 : 0).flip();
         return libsocket().setsockopt(s, level.intValue(), optname.intValue(), buf, buf.remaining());
     }
+
+    public static int getsockopt(int s, SocketLevel level, SocketOption optname, Struct data) {
+        Pointer struct_ptr = Struct.getMemory(data);
+        IntByReference ref = new IntByReference(Struct.size(data));
+        ByteBuffer buf = ByteBuffer.wrap((byte[])struct_ptr.array());
+
+        return Native.libsocket().getsockopt(s, level.intValue(), optname.intValue(), buf, ref);
+    }
 }
