@@ -75,17 +75,14 @@ public class CredentialsFunctionalTest {
         Credentials serverCreds = server.getCredentials();
 
         int myPid = getCurrentPid();
-        int loginUid = getLoginUid();
 
         assertEquals("Current PID should match client credentials",
                 myPid, clientCreds.getPid());
         assertEquals("Current PID should match server credentials",
                 myPid, serverCreds.getPid());
 
-        assertEquals("Login UID should match client credentials",
-                loginUid, clientCreds.getUid());
-        assertEquals("Login UID should match server credentials",
-                loginUid, serverCreds.getUid());
+        assertEquals("Client/server running in same process, UID should be the same",
+                clientCreds.getUid(), serverCreds.getUid());
 
         //don't have an easy way of getting effective GID, but they should be the same
         assertEquals("Client/server running in same process, GID should be the same",
