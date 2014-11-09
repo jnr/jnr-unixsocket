@@ -37,10 +37,10 @@ class Native {
                         ? new String[] { "socket", "nsl", "c" }
                         : new String[] { "c" };
     public static interface LibC {
-        static final LibC INSTANCE = Library.loadLibrary(LibC.class, libnames);
-        public static final int F_GETFL = com.kenai.constantine.platform.Fcntl.F_GETFL.value();
-        public static final int F_SETFL = com.kenai.constantine.platform.Fcntl.F_SETFL.value();
-        public static final int O_NONBLOCK = com.kenai.constantine.platform.OpenFlags.O_NONBLOCK.value();
+        
+        public static final int F_GETFL = jnr.constants.platform.Fcntl.F_GETFL.intValue();
+        public static final int F_SETFL = jnr.constants.platform.Fcntl.F_SETFL.intValue();
+        public static final int O_NONBLOCK = jnr.constants.platform.OpenFlags.O_NONBLOCK.intValue();
 
         int socket(int domain, int type, int protocol);
         int listen(int fd, int backlog);
@@ -55,13 +55,23 @@ class Native {
         int setsockopt(int s, int level, int optname, @In ByteBuffer optval, int optlen);
         String strerror(int error);
     }
+    
+    static final LibC INSTANCE;
+    
+    static {
+        LibraryLoader<LibC> loader = LibraryLoader.create(LibC.class);
+        for (String libraryName : libnames) {
+            loader.library(libraryName);
+        }
+        INSTANCE = loader.load();
+    }
 
     static final LibC libsocket() {
-        return LibC.INSTANCE;
+        return INSTANCE;
     }
 
     static final LibC libc() {
-        return LibC.INSTANCE;
+        return INSTANCE;
     }
 
     static int socket(ProtocolFamily domain, Sock type, int protocol) throws IOException {

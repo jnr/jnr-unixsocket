@@ -18,7 +18,7 @@
 
 package jnr.unixsocket;
 
-import com.kenai.constantine.platform.ProtocolFamily;
+import jnr.constants.platform.ProtocolFamily;
 
 public class UnixSocketAddress extends java.net.SocketAddress {
     private final SockAddrUnix address;

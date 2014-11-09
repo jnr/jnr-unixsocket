@@ -18,7 +18,7 @@
 
 package jnr.unixsocket;
 
-import com.kenai.constantine.platform.ProtocolFamily;
+import jnr.constants.platform.ProtocolFamily;
 import jnr.ffi.*;
 
 /**
@@ -30,17 +30,17 @@ abstract class SockAddrUnix extends Struct {
     protected abstract UTF8String getPathField();
     protected abstract NumberField getFamilyField();
 
-    public SockAddrUnix() {
+    SockAddrUnix() {
         super(jnr.ffi.Runtime.getSystemRuntime());
     }
 
     /**
      * Sets the protocol family of this unix socket address.
      *
-     * @param family The protocol family, usually {@link com.kenai.constantine.platform.ProtocolFamily.PF_UNIX}
+     * @param family The protocol family, usually {@link ProtocolFamily#PF_UNIX}
      */
-    public final void setFamily(ProtocolFamily family) {
-        getFamilyField().set(family.value());
+    final void setFamily(ProtocolFamily family) {
+        getFamilyField().set(family.intValue());
     }
 
 
@@ -49,7 +49,7 @@ abstract class SockAddrUnix extends Struct {
      *
      * @return The protocol family
      */
-    public final ProtocolFamily getFamily() {
+    final ProtocolFamily getFamily() {
         return ProtocolFamily.valueOf(getFamilyField().intValue());
     }
 
@@ -58,7 +58,7 @@ abstract class SockAddrUnix extends Struct {
      *
      * @param path The unix socket address
      */
-    public final void setPath(java.lang.String path) {
+    final void setPath(java.lang.String path) {
         getPathField().set(path);
     }
 
@@ -67,7 +67,7 @@ abstract class SockAddrUnix extends Struct {
      *
      * @return A String
      */
-    public final java.lang.String getPath() {
+    final java.lang.String getPath() {
         return getPathField().get();
     }
 
@@ -76,7 +76,7 @@ abstract class SockAddrUnix extends Struct {
      *
      * @return The maximum size of the address in bytes
      */
-    public int getMaximumLength() {
+    int getMaximumLength() {
         return 2 + getPathField().length();
     }
 
@@ -85,7 +85,7 @@ abstract class SockAddrUnix extends Struct {
      *
      * @return The actual size of this address, in bytes
      */
-    public int length() {
+    int length() {
         return 2 + strlen(getPathField());
     }
 
@@ -96,7 +96,7 @@ abstract class SockAddrUnix extends Struct {
      * @return An instance of <tt>SockAddrUnix</tt>
      */
     static SockAddrUnix create() {
-        return Platform.getPlatform().isBSD() ? new BSDSockAddrUnix() : new DefaultSockAddrUnix();
+        return Platform.getNativePlatform().isBSD() ? new BSDSockAddrUnix() : new DefaultSockAddrUnix();
     }
 
     private static final int strlen(UTF8String str) {
