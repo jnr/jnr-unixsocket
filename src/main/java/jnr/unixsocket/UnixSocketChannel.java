@@ -21,6 +21,8 @@ package jnr.unixsocket;
 import jnr.constants.platform.Errno;
 import jnr.constants.platform.ProtocolFamily;
 import jnr.constants.platform.Sock;
+import jnr.constants.platform.SocketLevel;
+import jnr.constants.platform.SocketOption;
 import jnr.enxio.channels.NativeSocketChannel;
 import jnr.ffi.*;
 import jnr.ffi.byref.IntByReference;
@@ -169,5 +171,22 @@ public class UnixSocketChannel extends NativeSocketChannel {
         }
 
         return remote;
+    }
+
+    public boolean getKeepAlive() {
+        int ret = Native.getsockopt(getFD(), SocketLevel.SOL_SOCKET, SocketOption.SO_KEEPALIVE.intValue());
+        return (ret == 1) ? true : false;
+    }
+
+    public void setKeepAlive(boolean on) {
+        Native.setsockopt(getFD(), SocketLevel.SOL_SOCKET, SocketOption.SO_KEEPALIVE, on);
+    }
+
+    public int getSoTimeout() {
+        return Native.getsockopt(getFD(), SocketLevel.SOL_SOCKET, SocketOption.SO_RCVTIMEO.intValue());
+    }
+
+    public void setSoTimeout(int timeout) {
+        Native.setsockopt(getFD(), SocketLevel.SOL_SOCKET, SocketOption.SO_RCVTIMEO, timeout);
     }
 }
