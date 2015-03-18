@@ -51,4 +51,20 @@ public class UnixSocket {
 
         return buf.getInt(0) != 0;
     }
+
+    /**
+     * Retrieves the credentials for this UNIX socket. Clients calling this
+     * method will receive the server's credentials, and servers will receive
+     * the client's credentials. User ID, group ID, and PID are supplied.
+     *
+     * @see man unix 7; SCM_CREDENTIALS
+     *
+     * @throws UnsupportedOperationException if the underlying socket library
+     *         doesn't support the SO_PEERCRED option
+     *
+     * @return the credentials of the remote
+     */
+    public final Credentials getCredentials() {
+        return Credentials.getCredentials(channel.getFD());
+    }
 }

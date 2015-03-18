@@ -151,6 +151,25 @@ public class UnixSocketChannel extends NativeSocketChannel {
         return localAddress != null ? localAddress : (localAddress = getsockname(getFD()));
     }
 
+    /**
+     * Retrieves the credentials for this UNIX socket. If this socket channel
+     * is not in a connected state, this method will return null.
+     * 
+     * @see man unix 7; SCM_CREDENTIALS
+     *
+     * @throws UnsupportedOperationException if the underlying socket library
+     *         doesn't support the SO_PEERCRED option
+     *
+     * @return the credentials of the remote; null if not connected
+     */
+    public final Credentials getCredentials() {
+        if (state != State.CONNECTED) {
+            return null;
+        }
+
+        return Credentials.getCredentials(getFD());
+    }
+
     static UnixSocketAddress getpeername(int sockfd) {
         UnixSocketAddress remote = new UnixSocketAddress();
         IntByReference len = new IntByReference(remote.getStruct().getMaximumLength());

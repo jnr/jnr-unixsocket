@@ -29,7 +29,9 @@ import jnr.constants.platform.SocketOption;
 import jnr.ffi.LastError;
 import jnr.ffi.Library;
 import jnr.ffi.Platform;
+import jnr.ffi.Pointer;
 import jnr.ffi.Runtime;
+import jnr.ffi.Struct;
 import jnr.ffi.annotations.In;
 import jnr.ffi.annotations.Out;
 import jnr.ffi.annotations.Transient;
@@ -153,8 +155,15 @@ class Native {
         }
     }
 
+    public static int getsockopt(int s, SocketLevel level, SocketOption optname, Struct data) {
+        Pointer struct_ptr = Struct.getMemory(data);
+        IntByReference ref = new IntByReference(Struct.size(data));
+        ByteBuffer buf = ByteBuffer.wrap((byte[])struct_ptr.array());
+
+        return Native.libsocket().getsockopt(s, level.intValue(), optname.intValue(), buf, ref);
+    }
+
     public static boolean getboolsockopt (int s, SocketLevel level, int optname) {
         return getsockopt(s, level, optname) != 0;
     }
-
 }
