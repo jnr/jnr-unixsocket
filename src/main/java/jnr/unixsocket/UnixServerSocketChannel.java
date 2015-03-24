@@ -40,7 +40,7 @@ public class UnixServerSocketChannel extends NativeServerSocketChannel {
     }
 
     UnixServerSocketChannel(SelectorProvider provider, int fd) {
-        super(provider, fd, SelectionKey.OP_ACCEPT);
+        super(provider, fd, SelectionKey.OP_ACCEPT | SelectionKey.OP_READ);
         this.socket = new UnixServerSocket(this);
     }
 
