@@ -59,7 +59,7 @@
     <dependency>
       <groupId>com.github.jnr</groupId>
       <artifactId>jnr-enxio</artifactId>
-      <version>0.8-SNAPSHOT</version>
+      <version>0.8</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
