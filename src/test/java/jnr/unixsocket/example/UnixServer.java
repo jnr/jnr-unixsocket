@@ -47,19 +47,28 @@ public class UnixServer {
             while (sel.select() > 0) {
                 Set<SelectionKey> keys = sel.selectedKeys();
 		Iterator<SelectionKey> iterator = keys.iterator();
+                boolean running = false;
+                boolean cancelled = false;
 		while ( iterator.hasNext()  ) {
 		    SelectionKey k = iterator.next();
                     Actor a = (Actor) k.attachment();
-                    if (!a.rxready()) {
+                    if (a.rxready()) {
+                        running = true;
+                    } else {
                         k.cancel();
+                        cancelled = true;
                     }
 		    iterator.remove();
+                }
+                if (!running && cancelled) {
+                    System.out.println("No Actors Running any more");
+                    break;
                 }
             }
         } catch (IOException ex) {
             Logger.getLogger(UnixServerSocket.class.getName()).log(Level.SEVERE, null, ex);
         }
-
+        System.out.println("UnixServer EXIT");
     }
 
     static interface Actor {
@@ -98,7 +107,7 @@ public class UnixServer {
                 int n = channel.read(buf);
                 UnixSocketAddress remote = channel.getRemoteSocketAddress();
                 System.out.printf("Read in %d bytes from %s\n", n, remote);
-                
+
                 if (n > 0) {
                     buf.flip();
                     channel.write(buf);

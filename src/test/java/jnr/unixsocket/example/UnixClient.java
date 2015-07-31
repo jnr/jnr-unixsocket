@@ -40,10 +40,14 @@ public class UnixClient {
         r.read(result);
         result.flip();
         System.out.println("read from server: " + result.toString());
+        final int status;
         if (!result.toString().equals(data)) {
             System.out.println("ERROR: data mismatch");
+            status = -1;
         } else {
             System.out.println("SUCCESS");
+            status = 0;
         }
+        System.exit(status);
     }
 }
