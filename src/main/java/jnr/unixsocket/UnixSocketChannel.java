@@ -51,7 +51,12 @@ public class UnixSocketChannel extends NativeSocketChannel {
 
     public static final UnixSocketChannel open(UnixSocketAddress remote) throws IOException {
         UnixSocketChannel channel = new UnixSocketChannel();
-        channel.connect(remote);
+        try {
+            channel.connect(remote);
+        } catch (IOException e) {
+            channel.close();
+            throw e;
+        }
         return channel;
     }
 
