@@ -33,20 +33,24 @@ import java.nio.channels.spi.SelectorProvider;
 public class UnixServerSocketChannel extends NativeServerSocketChannel {
 
     private final UnixServerSocket socket;
+    private final Sock socketType;
 
     UnixServerSocketChannel(UnixServerSocket socket) throws IOException {
         super(Native.socket(ProtocolFamily.PF_UNIX, Sock.SOCK_STREAM, 0));
         this.socket = new UnixServerSocket(this);
+        this.socketType = Sock.SOCK_STREAM;
     }
 
     UnixServerSocketChannel(SelectorProvider provider, int fd) {
         super(provider, fd, SelectionKey.OP_ACCEPT | SelectionKey.OP_READ);
         this.socket = new UnixServerSocket(this);
+        this.socketType = Sock.SOCK_STREAM;
     }
 
     public static UnixServerSocketChannel open() throws IOException {
         return new UnixServerSocket().channel;
     }
+
 
     public UnixSocketChannel accept() throws IOException {
         UnixSocketAddress remote = new UnixSocketAddress();
@@ -66,6 +70,11 @@ public class UnixServerSocketChannel extends NativeServerSocketChannel {
     }
 
     public final UnixServerSocket socket() {
+
         return socket;
+    }
+
+    public final Sock getSocketType () {
+        return socketType;
     }
 }
