@@ -6,18 +6,21 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.nio.CharBuffer;
 import java.nio.channels.Channels;
+
+import jnr.constants.platform.Sock;
 import jnr.unixsocket.UnixSocketAddress;
 import jnr.unixsocket.UnixSocketChannel;
 
 public class UnixClient {
     public static void main(String[] args) throws IOException {
-        java.io.File path = new java.io.File("/tmp/fubar.sock");
+        java.io.File path = new java.io.File("/tmp/fubr.sock");
         String data = "blah blah";
         UnixSocketAddress address = new UnixSocketAddress(path);
-        UnixSocketChannel channel = UnixSocketChannel.open(address);
+        UnixSocketChannel channel = UnixSocketChannel.open(address, Sock.SOCK_DGRAM);
         System.out.println("connected to " + channel.getRemoteSocketAddress());
         PrintWriter w = new PrintWriter(Channels.newOutputStream(channel));
         w.print(data);
+        w.print("\n hello from another side");
         w.flush();
 
         InputStreamReader r = new InputStreamReader(Channels.newInputStream(channel));

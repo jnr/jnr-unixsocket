@@ -18,6 +18,8 @@
 
 package jnr.unixsocket;
 
+import jnr.constants.platform.Sock;
+
 import java.io.IOException;
 import java.net.SocketAddress;
 
@@ -53,8 +55,10 @@ public class UnixServerSocket {
             throw new IOException("bind failed: " + Native.getLastErrorString());
         }
 
-        if (Native.listen(fd, backlog) < 0) {
-            throw new IOException("listen failed: " + Native.getLastErrorString());
+        if (channel.getSocketType() == Sock.SOCK_STREAM) {
+            if (Native.listen(fd, backlog) < 0) {
+                throw new IOException("listen failed: " + Native.getLastErrorString());
+            }
         }
     }
     

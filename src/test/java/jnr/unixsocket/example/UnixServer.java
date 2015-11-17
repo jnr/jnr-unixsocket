@@ -17,7 +17,7 @@ import jnr.unixsocket.UnixSocketChannel;
 public class UnixServer {
 
     public static void main(String[] args) throws IOException {
-        java.io.File path = new java.io.File("/tmp/fubar.sock");
+        java.io.File path = new java.io.File("/tmp/fubr.sock");
         path.deleteOnExit();
         UnixSocketAddress address = new UnixSocketAddress(path);
         UnixServerSocketChannel channel = UnixServerSocketChannel.open();

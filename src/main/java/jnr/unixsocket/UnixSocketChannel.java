@@ -55,6 +55,12 @@ public class UnixSocketChannel extends NativeSocketChannel {
         return channel;
     }
 
+    public static final UnixSocketChannel open(UnixSocketAddress remote, Sock sockType) throws IOException {
+        UnixSocketChannel channel = new UnixSocketChannel(sockType);
+        channel.connect(remote);
+        return channel;
+    }
+
     public static final UnixSocketChannel[] pair() throws IOException {
         int[] sockets = { -1, -1 };
         Native.socketpair(ProtocolFamily.PF_UNIX, Sock.SOCK_STREAM, 0, sockets);
@@ -67,6 +73,12 @@ public class UnixSocketChannel extends NativeSocketChannel {
     private UnixSocketChannel() throws IOException {
         super(Native.socket(ProtocolFamily.PF_UNIX, Sock.SOCK_STREAM, 0),
                 SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+        state = State.IDLE;
+    }
+
+    private UnixSocketChannel(Sock sockType) throws IOException {
+        super(Native.socket(ProtocolFamily.PF_UNIX, sockType, 0),
+            SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE);
         state = State.IDLE;
     }
 
