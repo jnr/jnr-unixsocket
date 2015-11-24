@@ -46,4 +46,14 @@ public class UnixSocketAddress extends java.net.SocketAddress {
     public String toString() {
         return "[family=" + address.getFamily() + " path=" + address.getPath() + "]";
     }
+
+    @Override
+    public boolean equals(Object _other) {
+        if (!(_other instanceof UnixSocketAddress)) return false;
+
+        UnixSocketAddress other = (UnixSocketAddress)_other;
+
+        return address.getFamily() == other.address.getFamily() &&
+                address.getPath().equals(other.address.getPath());
+    }
 }
