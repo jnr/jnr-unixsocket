@@ -68,7 +68,7 @@ public class ForFDTest {
             assertEquals(FOOBAR.length(), buf.position());
 
             buf.flip();
-            String result = new String(buf.array(), buf.position(), buf.limit(), StandardCharsets.UTF_8);
+            String result = new String(buf.array(), buf.position(), buf.limit(), "UTF-8");
 
             assertEquals(FOOBAR, result);
 
