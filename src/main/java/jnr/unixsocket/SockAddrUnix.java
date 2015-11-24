@@ -58,7 +58,7 @@ abstract class SockAddrUnix extends Struct {
      *
      * @param path The unix socket address
      */
-    final void setPath(java.lang.String path) {
+    void setPath(java.lang.String path) {
         getPathField().set(path);
     }
 
@@ -113,6 +113,11 @@ abstract class SockAddrUnix extends Struct {
         public final Unsigned8 sun_family = new Unsigned8();
         public final UTF8String sun_addr = new UTF8String(ADDR_LENGTH);
 
+        @Override
+        public void setPath(java.lang.String path) {
+            super.setPath(path);
+            sun_len.set(path.length());
+        }
         protected final UTF8String getPathField() {
             return sun_addr;
         }
