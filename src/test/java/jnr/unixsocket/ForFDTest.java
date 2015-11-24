@@ -2,13 +2,10 @@ package jnr.unixsocket;
 
 import jnr.constants.platform.ProtocolFamily;
 import jnr.constants.platform.Sock;
-import junit.framework.Assert;
 import org.junit.Test;
 
 import java.io.File;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.StandardCharsets;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
