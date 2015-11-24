@@ -21,6 +21,7 @@ import static junit.framework.Assert.*;
 
 public class BasicFunctionalityTest {
     private static final File SOCKADDR = new File("/tmp/jnr-unixsocket-test" + System.currentTimeMillis() + ".sock");
+    static { SOCKADDR.deleteOnExit(); }
     private static final UnixSocketAddress ADDRESS = new UnixSocketAddress(SOCKADDR);
     private static final String DATA = "blah blah";
 
