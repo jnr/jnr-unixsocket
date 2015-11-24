@@ -64,6 +64,27 @@ public class UnixSocketChannel extends NativeSocketChannel {
         };
     }
 
+    /**
+     * Create a UnixSocketChannel to wrap an existing file descriptor (presumably itself a UNIX socket).
+     *
+     * @param fd the file descriptor to wrap
+     * @return the new UnixSocketChannel instance
+     */
+    public static final UnixSocketChannel fromFD(int fd) {
+        return fromFD(fd, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+    }
+
+    /**
+     * Create a UnixSocketChannel to wrap an existing file descriptor (presumably itself a UNIX socket).
+     *
+     * @param fd the file descriptor to wrap
+     * @param ops the SelectionKey operations the socket supports
+     * @return the new UnixSocketChannel instance
+     */
+    public static final UnixSocketChannel fromFD(int fd, int ops) {
+        return new UnixSocketChannel(fd, ops);
+    }
+
     private UnixSocketChannel() throws IOException {
         super(Native.socket(ProtocolFamily.PF_UNIX, Sock.SOCK_STREAM, 0),
                 SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE);
