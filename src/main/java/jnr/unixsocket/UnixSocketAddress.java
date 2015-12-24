@@ -41,6 +41,10 @@ public class UnixSocketAddress extends java.net.SocketAddress {
     int length() {
         return address.length();
     }
+    
+    public String getPath() {
+        return address.getPath();
+    }
 
     @Override
     public String toString() {
