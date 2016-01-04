@@ -51,11 +51,11 @@ public class UnixServerSocket {
         localAddress = (UnixSocketAddress) endpoint;
 
         if (Native.bind(fd, localAddress.getStruct(), localAddress.length()) < 0) {
-            throw new IOException("bind failed: " + Native.getLastErrorString());
+            throw new IOException(Native.getLastErrorString());
         }
 
         if (Native.listen(fd, backlog) < 0) {
-            throw new IOException("listen failed: " + Native.getLastErrorString());
+            throw new IOException(Native.getLastErrorString());
         }
     }
     
