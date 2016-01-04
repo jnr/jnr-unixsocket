@@ -31,7 +31,7 @@ public class UnixSocketAddress extends java.net.SocketAddress {
     public UnixSocketAddress(java.io.File path) {
         address = SockAddrUnix.create();
         address.setFamily(ProtocolFamily.PF_UNIX);
-        address.setPath(path.getAbsolutePath());
+        address.setPath(path.getPath());
     }
     
     SockAddrUnix getStruct() {
@@ -40,6 +40,10 @@ public class UnixSocketAddress extends java.net.SocketAddress {
     
     int length() {
         return address.length();
+    }
+
+    public String path() {
+        return address.getPath();
     }
 
     @Override

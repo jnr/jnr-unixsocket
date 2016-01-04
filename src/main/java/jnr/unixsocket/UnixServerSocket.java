@@ -24,6 +24,7 @@ import java.net.SocketAddress;
 public class UnixServerSocket {
     final UnixServerSocketChannel channel;
     final int fd;
+    volatile UnixSocketAddress localAddress;
 
     public UnixServerSocket() throws IOException {
         this.channel = new UnixServerSocketChannel(this);
@@ -47,9 +48,9 @@ public class UnixServerSocket {
         if (!(endpoint instanceof UnixSocketAddress)) {
             throw new IOException("Invalid address");
         }
-        UnixSocketAddress addr = (UnixSocketAddress) endpoint;
+        localAddress = (UnixSocketAddress) endpoint;
 
-        if (Native.bind(fd, addr.getStruct(), addr.length()) < 0) {
+        if (Native.bind(fd, localAddress.getStruct(), localAddress.length()) < 0) {
             throw new IOException("bind failed: " + Native.getLastErrorString());
         }
 

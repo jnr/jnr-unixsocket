@@ -68,4 +68,12 @@ public class UnixServerSocketChannel extends NativeServerSocketChannel {
     public final UnixServerSocket socket() {
         return socket;
     }
+
+    public final UnixSocketAddress getRemoteSocketAddress() {
+        return null;
+    }
+
+    public final UnixSocketAddress getLocalSocketAddress() {
+        return socket.localAddress;
+    }
 }
