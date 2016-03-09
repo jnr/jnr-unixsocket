@@ -53,7 +53,14 @@ public class UnixServerSocketChannel extends NativeServerSocketChannel {
         SockAddrUnix addr = remote.getStruct();
         IntByReference len = new IntByReference(addr.getMaximumLength());
 
-        int clientfd = Native.accept(getFD(), addr, len);
+    	int clientfd=-1;
+        try {
+        	begin();
+            clientfd = Native.accept(getFD(), addr, len);
+        }
+        finally {
+        	end(clientfd>=0);
+        }
 
         if (clientfd < 0) {
             throw new IOException("accept failed: " + Native.getLastErrorString());
