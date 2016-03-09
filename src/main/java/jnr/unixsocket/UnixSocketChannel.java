@@ -51,7 +51,12 @@ public class UnixSocketChannel extends NativeSocketChannel {
 
     public static final UnixSocketChannel open(UnixSocketAddress remote) throws IOException {
         UnixSocketChannel channel = new UnixSocketChannel();
-        channel.connect(remote);
+        try {
+            channel.connect(remote);
+        } catch (IOException e) {
+            channel.close();
+            throw e;
+        }
         return channel;
     }
 
@@ -62,6 +67,27 @@ public class UnixSocketChannel extends NativeSocketChannel {
             new UnixSocketChannel(sockets[0], SelectionKey.OP_READ | SelectionKey.OP_WRITE),
             new UnixSocketChannel(sockets[1], SelectionKey.OP_READ | SelectionKey.OP_WRITE)
         };
+    }
+
+    /**
+     * Create a UnixSocketChannel to wrap an existing file descriptor (presumably itself a UNIX socket).
+     *
+     * @param fd the file descriptor to wrap
+     * @return the new UnixSocketChannel instance
+     */
+    public static final UnixSocketChannel fromFD(int fd) {
+        return fromFD(fd, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+    }
+
+    /**
+     * Create a UnixSocketChannel to wrap an existing file descriptor (presumably itself a UNIX socket).
+     *
+     * @param fd the file descriptor to wrap
+     * @param ops the SelectionKey operations the socket supports
+     * @return the new UnixSocketChannel instance
+     */
+    public static final UnixSocketChannel fromFD(int fd, int ops) {
+        return new UnixSocketChannel(fd, ops);
     }
 
     private UnixSocketChannel() throws IOException {
