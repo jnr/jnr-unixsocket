@@ -21,12 +21,26 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.nio.CharBuffer;
 import java.nio.channels.Channels;
+import java.util.concurrent.TimeUnit;
 import jnr.unixsocket.UnixSocketAddress;
 import jnr.unixsocket.UnixSocketChannel;
 
 public class UnixClient {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         java.io.File path = new java.io.File("/tmp/fubar.sock");
+        int retries = 0;
+        while (!path.exists()) {
+            TimeUnit.MILLISECONDS.sleep(500L);
+            retries++;
+            if (retries > 10) {
+                throw new IOException(
+                    String.format(
+                        "File %s does not exist after retry",
+                        path.getAbsolutePath()
+                    )
+                );
+            }
+        }
         String data = "blah blah";
         UnixSocketAddress address = new UnixSocketAddress(path);
         UnixSocketChannel channel = UnixSocketChannel.open(address);
