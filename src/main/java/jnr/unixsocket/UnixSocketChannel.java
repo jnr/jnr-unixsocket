@@ -181,7 +181,7 @@ public class UnixSocketChannel extends NativeSocketChannel {
      * Retrieves the credentials for this UNIX socket. If this socket channel
      * is not in a connected state, this method will return null.
      * 
-     * @see man unix 7; SCM_CREDENTIALS
+     * See man unix 7; SCM_CREDENTIALS
      *
      * @throws UnsupportedOperationException if the underlying socket library
      *         doesn't support the SO_PEERCRED option
