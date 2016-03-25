@@ -29,6 +29,8 @@ import jnr.ffi.byref.IntByReference;
 
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * A {@link java.nio.channels.Channel} implementation that uses a native unix socket
@@ -40,10 +42,10 @@ public class UnixSocketChannel extends NativeSocketChannel {
         IDLE,
         CONNECTING,
     }
-    private volatile State state;
+    private State state;
     private UnixSocketAddress remoteAddress = null;
     private UnixSocketAddress localAddress = null;
-    private final Object stateLock = new Object();
+    private final ReadWriteLock stateLock = new ReentrantReadWriteLock();
 
     public static final UnixSocketChannel open() throws IOException {
         return new UnixSocketChannel();
@@ -93,17 +95,23 @@ public class UnixSocketChannel extends NativeSocketChannel {
     private UnixSocketChannel() throws IOException {
         super(Native.socket(ProtocolFamily.PF_UNIX, Sock.SOCK_STREAM, 0),
                 SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+        stateLock.writeLock().lock();
         state = State.IDLE;
+        stateLock.writeLock().unlock();
     }
 
     UnixSocketChannel(int fd, int ops) {
         super(fd, ops);
+        stateLock.writeLock().lock();
         state = State.CONNECTED;
+        stateLock.writeLock().unlock();
     }
 
     UnixSocketChannel(int fd, UnixSocketAddress remote) {
         super(fd, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+        stateLock.writeLock().lock();
         state = State.CONNECTED;
+        stateLock.writeLock().unlock();
         remoteAddress = remote;
     }
 
@@ -127,50 +135,65 @@ public class UnixSocketChannel extends NativeSocketChannel {
         remoteAddress = remote;
         if (!doConnect(remoteAddress.getStruct())) {
 
+            stateLock.writeLock().lock();
             state = State.CONNECTING;
+            stateLock.writeLock().unlock();
             return false;
-        
+
         } else {
 
+            stateLock.writeLock().lock();
             state = State.CONNECTED;
+            stateLock.writeLock().unlock();
             return true;
         }
     }
 
     public boolean isConnected() {
-        return state == State.CONNECTED;
+        stateLock.readLock().lock();
+        boolean isConnected = state == State.CONNECTED;
+        stateLock.readLock().lock();
+        return isConnected;
     }
 
     public boolean isConnectionPending() {
-        return state == State.CONNECTING;
+        stateLock.readLock().lock();
+        boolean isConnectionPending = state == State.CONNECTING;
+        stateLock.readLock().lock();
+        return isConnectionPending;
     }
 
     public boolean finishConnect() throws IOException {
-        switch (state) {
-            case CONNECTED:
-                return true;
+        stateLock.writeLock().lock();
+        try {
+            switch (state) {
+                case CONNECTED:
+                    return true;
 
-            case CONNECTING:
-                if (!doConnect(remoteAddress.getStruct())) {
-                    return false;
-                }
-                state = State.CONNECTED;
-                return true;
+                case CONNECTING:
+                    if (!doConnect(remoteAddress.getStruct())) {
+                        return false;
+                    }
+                    state = State.CONNECTED;
+                    return true;
 
-            default:
-                throw new IllegalStateException("socket is not waiting for connect to complete");
+                default:
+                    throw new IllegalStateException("socket is not waiting for connect to complete");
+            }
+        } finally {
+            stateLock.writeLock().unlock();
         }
     }
 
     public final UnixSocketAddress getRemoteSocketAddress() {
-        if (state != State.CONNECTED) {
+        if (!isConnected()) {
             return null;
         }
         return remoteAddress != null ? remoteAddress : (remoteAddress = getpeername(getFD()));
     }
 
     public final UnixSocketAddress getLocalSocketAddress() {
-        if (state != State.CONNECTED) {
+        if (!isConnected()) {
             return null;
         }
 
@@ -180,7 +203,7 @@ public class UnixSocketChannel extends NativeSocketChannel {
     /**
      * Retrieves the credentials for this UNIX socket. If this socket channel
      * is not in a connected state, this method will return null.
-     * 
+     *
      * See man unix 7; SCM_CREDENTIALS
      *
      * @throws UnsupportedOperationException if the underlying socket library
@@ -189,7 +212,7 @@ public class UnixSocketChannel extends NativeSocketChannel {
      * @return the credentials of the remote; null if not connected
      */
     public final Credentials getCredentials() {
-        if (state != State.CONNECTED) {
+        if (!isConnected()) {
             return null;
         }
 
