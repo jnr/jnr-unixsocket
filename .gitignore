@@ -1,7 +1,48 @@
+# maven
+target/
+*.versionsBackup
+*.releaseBackup
+
+# eclipse
+.classpath
+.project
+.settings
+
+# intellij / android studio
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# common junk
+*.log
+*.diff
+*.patch
+*.sw[a-p]
+*.bak
+*.backup
+*.debug
+*.dump
+
+# vim 
+.*.sw[a-p]
+*~
+~*
+
+# Mac filesystem dust
+.DS_Store
+
+# pmd
+.pmdruleset
+.pmd
+
+# merge tooling
+*.orig
+*.rej
 \.orig$
 \.orig\..*$
 \.chg\..*$
 \.rej$
 \.conflict\~$
-target
+
 .idea
