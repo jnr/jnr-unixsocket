@@ -42,8 +42,8 @@ import jnr.posix.Timeval;
 
 class Native {
     static final String[] libnames = Platform.getNativePlatform().getOS() == Platform.OS.SOLARIS
-                        ? new String[] { "socket", "nsl", "c" }
-                        : new String[] { "c" };
+                        ? new String[] { "socket", "nsl", Platform.getNativePlatform().getStandardCLibraryName() }
+                        : new String[] { Platform.getNativePlatform().getStandardCLibraryName() };
     public static interface LibC {
         
         public static final int F_GETFL = jnr.constants.platform.Fcntl.F_GETFL.intValue();
