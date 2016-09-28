@@ -53,7 +53,7 @@
     <dependency>
       <groupId>com.github.jnr</groupId>
       <artifactId>jnr-constants</artifactId>
-      <version>0.9.3</version>
+      <version>0.9.4</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
