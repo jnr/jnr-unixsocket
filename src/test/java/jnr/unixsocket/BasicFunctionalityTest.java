@@ -101,7 +101,10 @@ public class BasicFunctionalityTest {
             try {
                 UnixSocketChannel client = channel.accept();
 
-                assertNotNull(client);
+                if (client == null) {
+                    // nonblocking result
+                    return false;
+                }
                 // TODO: This doesn't work for some reason.
 //                assertEquals(ADDRESS, client.getLocalSocketAddress());
 //                assertEquals("", client.getRemoteSocketAddress().getStruct().getPath());
