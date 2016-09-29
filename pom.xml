@@ -10,7 +10,7 @@
   <groupId>com.github.jnr</groupId>
   <artifactId>jnr-unixsocket</artifactId>
   <packaging>jar</packaging>
-  <version>0.12-SNAPSHOT</version>
+  <version>0.14-SNAPSHOT</version>
   <name>jnr-unixsocket</name>
   <description>Native I/O access for java</description>
   <url>http://github.com/jnr/jnr-unixsocket</url>
@@ -47,25 +47,25 @@
     <dependency>
       <groupId>com.github.jnr</groupId>
       <artifactId>jnr-ffi</artifactId>
-      <version>2.0.8</version>
+      <version>2.1.0</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.github.jnr</groupId>
       <artifactId>jnr-constants</artifactId>
-      <version>0.9.1</version>
+      <version>0.9.4</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.github.jnr</groupId>
       <artifactId>jnr-enxio</artifactId>
-      <version>0.11</version>
+      <version>0.13</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.github.jnr</groupId>
       <artifactId>jnr-posix</artifactId>
-      <version>3.0.28</version>
+      <version>3.0.30</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>
@@ -109,6 +109,14 @@
             <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
           </archive>
         </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>jar</goal>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -126,12 +134,73 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.10.3</version>
         <executions>
           <execution>
             <id>attach-javadocs</id>
             <goals>
               <goal>jar</goal>
             </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+	<version>2.5.5</version>
+        <executions>
+          <execution>
+            <id>assemble-all</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <descriptorRefs>
+                <descriptorRef>jar-with-dependencies</descriptorRef>
+              </descriptorRefs>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.4.0</version>
+        <executions>
+          <execution>
+            <id>pre-execute</id>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>${project.basedir}/src/test/resources/background.sh</executable>
+              <arguments>
+                <arg>java -cp target/${project.artifactId}-${project.version}-jar-with-dependencies.jar:target/${project.artifactId}-${project.version}-tests.jar jnr.unixsocket.example.UnixServer</arg>
+              </arguments>
+              <successCodes>
+                <successCode>0</successCode>
+              </successCodes>
+            </configuration>
+          </execution>
+          <execution>
+            <id>execute</id>
+            <phase>integration-test</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>java</executable>
+              <arguments>
+                <arg>-cp</arg>
+                <arg>target/${project.artifactId}-${project.version}-jar-with-dependencies.jar:target/${project.artifactId}-${project.version}-tests.jar</arg>
+                <arg>jnr.unixsocket.example.UnixClient</arg>
+              </arguments>
+              <successCodes>
+                <successCode>0</successCode>
+              </successCodes>
+            </configuration>
           </execution>
         </executions>
       </plugin>

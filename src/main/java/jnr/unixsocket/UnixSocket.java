@@ -57,7 +57,7 @@ public class UnixSocket {
      * method will receive the server's credentials, and servers will receive
      * the client's credentials. User ID, group ID, and PID are supplied.
      *
-     * @see man unix 7; SCM_CREDENTIALS
+     * See man unix 7; SCM_CREDENTIALS
      *
      * @throws UnsupportedOperationException if the underlying socket library
      *         doesn't support the SO_PEERCRED option

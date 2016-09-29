@@ -63,7 +63,11 @@ public class UnixServerSocketChannel extends NativeServerSocketChannel {
         }
 
         if (clientfd < 0) {
-            throw new IOException("accept failed: " + Native.getLastErrorString());
+            if (isBlocking()) {
+                throw new IOException("accept failed: " + Native.getLastErrorString());
+            }
+
+            return null;
         }
 
         // Always force the socket back to blocking mode
