@@ -84,7 +84,7 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
 	 * @return the new UnixSocketChannel instance
 	 */
 	public static final UnixSocketChannel fromFD(int fd) {
-		return fromFD(fd);
+		return new UnixSocketChannel(fd);
 	}
 
 	private UnixSocketChannel() throws IOException {
