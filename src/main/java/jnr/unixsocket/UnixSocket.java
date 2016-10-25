@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2009 Wayne Meissner
+ * Copyright (C) 2016 Marcus Linke
+ * 
+ * (ported from https://github.com/softprops/unisockets/blob/master/unisockets-core/src/main/scala/Socket.scala)
  *
  * This file is part of the JNR project.
  *
@@ -14,45 +16,146 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ * 
  */
-
 package jnr.unixsocket;
 
-import jnr.constants.platform.SocketLevel;
-import jnr.constants.platform.SocketOption;
-import jnr.enxio.channels.NativeSocketChannel;
-import jnr.ffi.byref.IntByReference;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetAddress;
+import java.net.SocketAddress;
+import java.nio.channels.Channels;
+import java.nio.channels.SocketChannel;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.channels.Channel;
+class UnixSocket extends java.net.Socket {
 
-public class UnixSocket {
-    private final NativeSocketChannel channel;
+	private UnixSocketChannel chan;
 
-    UnixSocket(NativeSocketChannel channel) {
-        this.channel = channel;
-    }
+	volatile private boolean closed = false;
+	volatile private boolean indown = false;
+	volatile private boolean outdown = false;
 
-    public final Channel getChannel() {
-        return channel;
-    }
+	private InputStream in;
+	private OutputStream out;
 
-    public final void setKeepAlive(boolean on) {
-        Native.setsockopt(channel.getFD(), SocketLevel.SOL_SOCKET, SocketOption.SO_KEEPALIVE, on);
-    }
+	public UnixSocket(UnixSocketChannel chan) {
+		this.chan = chan;
+		in = Channels.newInputStream(chan);
+		out = Channels.newOutputStream(chan);
+	}
 
-    public final boolean getKeepAlive() {
-        ByteBuffer buf = ByteBuffer.allocate(4);
-        buf.order(ByteOrder.BIG_ENDIAN);
-        IntByReference ref = new IntByReference(4);
+	public void bind(SocketAddress addr) {
+		throw new UnsupportedOperationException("bind not supported");
+	}
 
-        Native.libsocket().getsockopt(channel.getFD(), SocketLevel.SOL_SOCKET.intValue(), SocketOption.SO_KEEPALIVE.intValue(), buf, ref);
+	@Override
+	public void close() throws IOException {
+		chan.close();
+		closed = true;
+	}
 
-        return buf.getInt(0) != 0;
-    }
+	@Override
+	public void connect(SocketAddress addr) throws IOException {
+		connect(addr, 0);
+	}
 
-    /**
+	public void connect(SocketAddress addr, Integer timeout) throws IOException {
+		if (addr instanceof UnixSocketAddress) {
+			chan.connect((UnixSocketAddress) addr);
+		} else {
+			throw new IllegalArgumentException("address of type "
+					+ addr.getClass() + " are not supported. Use "
+					+ UnixSocketAddress.class + " instead");
+		}
+	}
+
+	@Override
+	public SocketChannel getChannel() {
+		return chan;
+	}
+
+	@Override
+	public InetAddress getInetAddress() {
+		return null;
+	}
+
+	public InputStream getInputStream() throws IOException {
+		if (chan.isConnected()) {
+			return in;
+		} else {
+			throw new IOException("not connected");
+		}
+	}
+
+	@Override
+	public SocketAddress getLocalSocketAddress() {
+		UnixSocketAddress address = chan.getLocalSocketAddress();
+		if (address != null) {
+			return address;
+		} else {
+			return null;
+		}
+	}
+
+	@Override
+	public OutputStream getOutputStream() throws IOException {
+		if (chan.isConnected()) {
+			return out;
+		} else {
+			throw new IOException("not connected");
+		}
+	}
+
+	@Override
+	public SocketAddress getRemoteSocketAddress() {
+		SocketAddress address = chan.getRemoteSocketAddress();
+
+		if (address != null) {
+			return address;
+		} else {
+			return null;
+		}
+	}
+
+	@Override
+	public boolean isBound() {
+		return false;
+	}
+
+	@Override
+	public boolean isClosed() {
+		return closed;
+	}
+
+	@Override
+	public boolean isConnected() {
+		return chan.isConnected();
+	}
+
+	@Override
+	public boolean isInputShutdown() {
+		return indown;
+	}
+
+	@Override
+	public boolean isOutputShutdown() {
+		return outdown;
+	}
+
+	@Override
+	public void shutdownInput() throws IOException {
+		chan.shutdownInput();
+		indown = true;
+	}
+
+	@Override
+	public void shutdownOutput() throws IOException {
+		chan.shutdownOutput();
+		outdown = true;
+	}
+	
+	/**
      * Retrieves the credentials for this UNIX socket. Clients calling this
      * method will receive the server's credentials, and servers will receive
      * the client's credentials. User ID, group ID, and PID are supplied.
@@ -65,6 +168,6 @@ public class UnixSocket {
      * @return the credentials of the remote
      */
     public final Credentials getCredentials() {
-        return Credentials.getCredentials(channel.getFD());
+    	return chan.getCredentials();
     }
 }

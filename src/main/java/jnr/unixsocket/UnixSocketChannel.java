@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Wayne Meissner
+ * Copyright (C) 2016 Marcus Linke
  *
  * This file is part of the JNR project.
  *
@@ -18,243 +18,323 @@
 
 package jnr.unixsocket;
 
+import java.io.IOException;
+import java.net.Socket;
+import java.net.SocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
+import java.nio.channels.UnsupportedAddressTypeException;
+
 import jnr.constants.platform.Errno;
 import jnr.constants.platform.ProtocolFamily;
 import jnr.constants.platform.Sock;
 import jnr.constants.platform.SocketLevel;
 import jnr.constants.platform.SocketOption;
-import jnr.enxio.channels.NativeSocketChannel;
-import jnr.ffi.*;
+import jnr.enxio.channels.AbstractNativeSocketChannel;
+import jnr.ffi.LastError;
 import jnr.ffi.byref.IntByReference;
 
-import java.io.IOException;
-import java.nio.channels.SelectionKey;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 /**
- * A {@link java.nio.channels.Channel} implementation that uses a native unix socket
+ * A {@link java.nio.channels.Channel} implementation that uses a native unix
+ * socket
  */
-public class UnixSocketChannel extends NativeSocketChannel {
-    static enum State {
-        UNINITIALIZED,
-        CONNECTED,
-        IDLE,
-        CONNECTING,
-    }
-    private State state;
-    private UnixSocketAddress remoteAddress = null;
-    private UnixSocketAddress localAddress = null;
-    private final ReadWriteLock stateLock = new ReentrantReadWriteLock();
+public class UnixSocketChannel extends AbstractNativeSocketChannel {
+	enum State {
+		UNINITIALIZED, CONNECTED, IDLE, CONNECTING,
+	}
 
-    public static final UnixSocketChannel open() throws IOException {
-        return new UnixSocketChannel();
-    }
+	private volatile State state;
+	private UnixSocketAddress remoteAddress = null;
+	private UnixSocketAddress localAddress = null;
 
-    public static final UnixSocketChannel open(UnixSocketAddress remote) throws IOException {
-        UnixSocketChannel channel = new UnixSocketChannel();
-        try {
-            channel.connect(remote);
-        } catch (IOException e) {
-            channel.close();
-            throw e;
-        }
-        return channel;
-    }
+	public static final UnixSocketChannel open() throws IOException {
+		return new UnixSocketChannel();
+	}
 
-    public static final UnixSocketChannel[] pair() throws IOException {
-        int[] sockets = { -1, -1 };
-        Native.socketpair(ProtocolFamily.PF_UNIX, Sock.SOCK_STREAM, 0, sockets);
-        return new UnixSocketChannel[] {
-            new UnixSocketChannel(sockets[0], SelectionKey.OP_READ | SelectionKey.OP_WRITE),
-            new UnixSocketChannel(sockets[1], SelectionKey.OP_READ | SelectionKey.OP_WRITE)
-        };
-    }
+	public static final UnixSocketChannel open(UnixSocketAddress remote)
+			throws IOException {
+		UnixSocketChannel channel = new UnixSocketChannel();
 
-    /**
-     * Create a UnixSocketChannel to wrap an existing file descriptor (presumably itself a UNIX socket).
-     *
-     * @param fd the file descriptor to wrap
-     * @return the new UnixSocketChannel instance
-     */
-    public static final UnixSocketChannel fromFD(int fd) {
-        return fromFD(fd, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-    }
+		try {
+			channel.connect(remote);
+		} catch (IOException e) {
+			channel.close();
+			throw e;
+		}
+		return channel;
+	}
 
-    /**
-     * Create a UnixSocketChannel to wrap an existing file descriptor (presumably itself a UNIX socket).
-     *
-     * @param fd the file descriptor to wrap
-     * @param ops the SelectionKey operations the socket supports
-     * @return the new UnixSocketChannel instance
-     */
-    public static final UnixSocketChannel fromFD(int fd, int ops) {
-        return new UnixSocketChannel(fd, ops);
-    }
+	public static final UnixSocketChannel create() throws IOException {
+		return new UnixSocketChannel();
+	}
 
-    private UnixSocketChannel() throws IOException {
-        super(Native.socket(ProtocolFamily.PF_UNIX, Sock.SOCK_STREAM, 0),
-                SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-        stateLock.writeLock().lock();
-        state = State.IDLE;
-        stateLock.writeLock().unlock();
-    }
+	public static final UnixSocketChannel[] pair() throws IOException {
+		int[] sockets = { -1, -1 };
+		Native.socketpair(ProtocolFamily.PF_UNIX, Sock.SOCK_STREAM, 0, sockets);
+		return new UnixSocketChannel[] { new UnixSocketChannel(sockets[0]),
+				new UnixSocketChannel(sockets[1]) };
+	}
 
-    UnixSocketChannel(int fd, int ops) {
-        super(fd, ops);
-        stateLock.writeLock().lock();
-        state = State.CONNECTED;
-        stateLock.writeLock().unlock();
-    }
+	/**
+	 * Create a UnixSocketChannel to wrap an existing file descriptor
+	 * (presumably itself a UNIX socket).
+	 *
+	 * @param fd
+	 *            the file descriptor to wrap
+	 * @return the new UnixSocketChannel instance
+	 */
+	public static final UnixSocketChannel fromFD(int fd) {
+		return new UnixSocketChannel(fd);
+	}
 
-    UnixSocketChannel(int fd, UnixSocketAddress remote) {
-        super(fd, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-        stateLock.writeLock().lock();
-        state = State.CONNECTED;
-        stateLock.writeLock().unlock();
-        remoteAddress = remote;
-    }
+	private UnixSocketChannel() throws IOException {
+		super(Native.socket(ProtocolFamily.PF_UNIX, Sock.SOCK_STREAM, 0));
+		state = State.IDLE;
+	}
 
-    private final boolean doConnect(SockAddrUnix remote) throws IOException {
-        if (Native.connect(getFD(), remote, remote.length()) != 0) {
-            Errno error = Errno.valueOf(LastError.getLastError(jnr.ffi.Runtime.getSystemRuntime()));
+	UnixSocketChannel(int fd) {
+		super(fd);
+		state = State.CONNECTED;
+	}
 
-            switch (error) {
-                case EAGAIN:
-                case EWOULDBLOCK:
-                    return false;
+	UnixSocketChannel(int fd, UnixSocketAddress remote) {
+		super(fd);
+		state = State.CONNECTED;
+		remoteAddress = remote;
+	}
 
-                default:
-                    throw new IOException(error.toString());
-            }
-        }
-        return true;
-    }
+	private boolean doConnect(SockAddrUnix remote) throws IOException {
+		if (Native.connect(getFD(), remote, remote.length()) != 0) {
+			Errno error = Errno.valueOf(LastError.getLastError(jnr.ffi.Runtime
+					.getSystemRuntime()));
 
-    public boolean connect(UnixSocketAddress remote) throws IOException {
-        remoteAddress = remote;
-        if (!doConnect(remoteAddress.getStruct())) {
+			switch (error) {
+			case EAGAIN:
+			case EWOULDBLOCK:
+				return false;
 
-            stateLock.writeLock().lock();
-            state = State.CONNECTING;
-            stateLock.writeLock().unlock();
-            return false;
+			default:
+				throw new IOException(error.toString());
+			}
+		}
 
-        } else {
+		return true;
+	}
 
-            stateLock.writeLock().lock();
-            state = State.CONNECTED;
-            stateLock.writeLock().unlock();
-            return true;
-        }
-    }
+	public boolean connect(UnixSocketAddress remote) throws IOException {
+		remoteAddress = remote;
+		if (!doConnect(remoteAddress.getStruct())) {
 
-    public boolean isConnected() {
-        stateLock.readLock().lock();
-        boolean isConnected = state == State.CONNECTED;
-        stateLock.readLock().lock();
-        return isConnected;
-    }
+			state = State.CONNECTING;
+			return false;
 
-    public boolean isConnectionPending() {
-        stateLock.readLock().lock();
-        boolean isConnectionPending = state == State.CONNECTING;
-        stateLock.readLock().lock();
-        return isConnectionPending;
-    }
+		} else {
 
-    public boolean finishConnect() throws IOException {
-        stateLock.writeLock().lock();
-        try {
-            switch (state) {
-                case CONNECTED:
-                    return true;
+			state = State.CONNECTED;
+			return true;
+		}
+	}
 
-                case CONNECTING:
-                    if (!doConnect(remoteAddress.getStruct())) {
-                        return false;
-                    }
-                    state = State.CONNECTED;
-                    return true;
+	public boolean isConnected() {
+		return state == State.CONNECTED;
+	}
 
-                default:
-                    throw new IllegalStateException("socket is not waiting for connect to complete");
-            }
-        } finally {
-            stateLock.writeLock().unlock();
-        }
-    }
+	public boolean isConnectionPending() {
+		return state == State.CONNECTING;
+	}
 
-    public final UnixSocketAddress getRemoteSocketAddress() {
-        if (!isConnected()) {
-            return null;
-        }
-        return remoteAddress != null ? remoteAddress : (remoteAddress = getpeername(getFD()));
-    }
+	public boolean finishConnect() throws IOException {
+		switch (state) {
+		case CONNECTED:
+			return true;
 
-    public final UnixSocketAddress getLocalSocketAddress() {
-        if (!isConnected()) {
-            return null;
-        }
+		case CONNECTING:
+			if (!doConnect(remoteAddress.getStruct())) {
+				return false;
+			}
+			state = State.CONNECTED;
+			return true;
 
-        return localAddress != null ? localAddress : (localAddress = getsockname(getFD()));
-    }
+		default:
+			throw new IllegalStateException(
+					"socket is not waiting for connect to complete");
+		}
+	}
 
-    /**
-     * Retrieves the credentials for this UNIX socket. If this socket channel
-     * is not in a connected state, this method will return null.
-     *
-     * See man unix 7; SCM_CREDENTIALS
-     *
-     * @throws UnsupportedOperationException if the underlying socket library
-     *         doesn't support the SO_PEERCRED option
-     *
-     * @return the credentials of the remote; null if not connected
-     */
-    public final Credentials getCredentials() {
-        if (!isConnected()) {
-            return null;
-        }
+	public final UnixSocketAddress getRemoteSocketAddress() {
+		if (state != State.CONNECTED) {
+			return null;
+		}
 
-        return Credentials.getCredentials(getFD());
-    }
+		if (remoteAddress != null) {
+			return remoteAddress;
+		} else {
+			remoteAddress = getpeername(getFD());
+			return remoteAddress;
+		}
+	}
 
-    static UnixSocketAddress getpeername(int sockfd) {
-        UnixSocketAddress remote = new UnixSocketAddress();
-        IntByReference len = new IntByReference(remote.getStruct().getMaximumLength());
+	public final UnixSocketAddress getLocalSocketAddress() {
+		if (state != State.CONNECTED) {
+			return null;
+		}
 
-        if (Native.libc().getpeername(sockfd, remote.getStruct(), len) < 0) {
-            throw new Error(Native.getLastErrorString());
-        }
+		if (localAddress != null) {
+			return localAddress;
+		} else {
+			localAddress = getsockname(getFD());
+			return localAddress;
+		}
+	}
 
-        return remote;
-    }
+	/**
+	 * Retrieves the credentials for this UNIX socket. If this socket channel is
+	 * not in a connected state, this method will return null.
+	 *
+	 * See man unix 7; SCM_CREDENTIALS
+	 *
+	 * @throws UnsupportedOperationException
+	 *             if the underlying socket library doesn't support the
+	 *             SO_PEERCRED option
+	 *
+	 * @return the credentials of the remote; null if not connected
+	 */
+	public final Credentials getCredentials() {
+		if (state != State.CONNECTED) {
+			return null;
+		}
 
-    static UnixSocketAddress getsockname(int sockfd) {
-        UnixSocketAddress remote = new UnixSocketAddress();
-        IntByReference len = new IntByReference(remote.getStruct().getMaximumLength());
+		return Credentials.getCredentials(getFD());
+	}
 
-        if (Native.libc().getsockname(sockfd, remote.getStruct(), len) < 0) {
-            throw new Error(Native.getLastErrorString());
-        }
+	static UnixSocketAddress getpeername(int sockfd) {
+		UnixSocketAddress remote = new UnixSocketAddress();
+		IntByReference len = new IntByReference(remote.getStruct()
+				.getMaximumLength());
 
-        return remote;
-    }
+		if (Native.libc().getpeername(sockfd, remote.getStruct(), len) < 0) {
+			throw new Error(Native.getLastErrorString());
+		}
 
-    public boolean getKeepAlive() {
-        int ret = Native.getsockopt(getFD(), SocketLevel.SOL_SOCKET, SocketOption.SO_KEEPALIVE.intValue());
-        return (ret == 1) ? true : false;
-    }
+		return remote;
+	}
 
-    public void setKeepAlive(boolean on) {
-        Native.setsockopt(getFD(), SocketLevel.SOL_SOCKET, SocketOption.SO_KEEPALIVE, on);
-    }
+	static UnixSocketAddress getsockname(int sockfd) {
+		UnixSocketAddress remote = new UnixSocketAddress();
+		IntByReference len = new IntByReference(remote.getStruct()
+				.getMaximumLength());
 
-    public int getSoTimeout() {
-        return Native.getsockopt(getFD(), SocketLevel.SOL_SOCKET, SocketOption.SO_RCVTIMEO.intValue());
-    }
+		if (Native.libc().getsockname(sockfd, remote.getStruct(), len) < 0) {
+			throw new Error(Native.getLastErrorString());
+		}
 
-    public void setSoTimeout(int timeout) {
-        Native.setsockopt(getFD(), SocketLevel.SOL_SOCKET, SocketOption.SO_RCVTIMEO, timeout);
-    }
+		return remote;
+	}
+
+	public boolean getKeepAlive() {
+		int ret = Native.getsockopt(getFD(), SocketLevel.SOL_SOCKET,
+				SocketOption.SO_KEEPALIVE.intValue());
+		return (ret == 1) ? true : false;
+	}
+
+	public void setKeepAlive(boolean on) {
+		Native.setsockopt(getFD(), SocketLevel.SOL_SOCKET,
+				SocketOption.SO_KEEPALIVE, on);
+	}
+
+	public int getSoTimeout() {
+		return Native.getsockopt(getFD(), SocketLevel.SOL_SOCKET,
+				SocketOption.SO_RCVTIMEO.intValue());
+	}
+
+	public void setSoTimeout(int timeout) {
+		Native.setsockopt(getFD(), SocketLevel.SOL_SOCKET,
+				SocketOption.SO_RCVTIMEO, timeout);
+	}
+
+	@Override
+	public boolean connect(SocketAddress remote) throws IOException {
+		if (remote instanceof UnixSocketAddress) {
+			return connect(((UnixSocketAddress) remote));
+		} else {
+			throw new UnsupportedAddressTypeException();
+		}
+	}
+
+	@Override
+	public Socket socket() {
+		return new UnixSocket(this);
+	}
+
+	@Override
+	public long write(ByteBuffer[] srcs, int offset, int length)
+			throws IOException {
+		
+		if (state == State.CONNECTED) {
+			return super.write(srcs, offset, length);
+		} else if (state == State.IDLE) {
+			return 0;
+		} else {
+			throw new ClosedChannelException();
+		}
+	}
+
+	@Override
+	public int read(ByteBuffer dst) throws IOException {
+		if (state == State.CONNECTED) {
+			return super.read(dst);
+		} else if (state == State.IDLE) {
+			return 0;
+		} else {
+			throw new ClosedChannelException();
+		}
+	}
+
+	@Override
+	public int write(ByteBuffer src) throws IOException {
+		if (state == State.CONNECTED) {
+			return super.write(src);
+		} else if (state == State.IDLE) {
+			return 0;
+		} else {
+			throw new ClosedChannelException();
+		}
+	}
+	
+	/**
+
+	@Override
+	public SocketAddress getRemoteAddress() throws IOException {
+		return remoteAddress;
+	}
+
+	@Override
+	public SocketAddress getLocalAddress() throws IOException {
+		throw new UnsupportedOperationException(
+				"getLocalAddress is not supported");
+	}
+
+	@Override
+	public <T> T getOption(java.net.SocketOption<T> name) throws IOException {
+		throw new UnsupportedOperationException("getOption is not supported");
+	}
+
+	@Override
+	public Set<java.net.SocketOption<?>> supportedOptions() {
+		throw new UnsupportedOperationException(
+				"supportedOptions is not supported");
+	}
+
+	@Override
+	public SocketChannel bind(SocketAddress local) throws IOException {
+		throw new UnsupportedOperationException("bind is not supported");
+	}
+
+	@Override
+	public <T> SocketChannel setOption(java.net.SocketOption<T> name, T value)
+			throws IOException {
+		throw new UnsupportedOperationException("setOption is not supported");
+	}
+	
+	**/
 }
