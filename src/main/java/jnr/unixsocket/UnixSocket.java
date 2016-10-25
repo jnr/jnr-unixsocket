@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2009 Wayne Meissner
+ * Copyright (C) 2016 Marcus Linke
+ * 
+ * (ported from https://github.com/softprops/unisockets/blob/master/unisockets-core/src/main/scala/Socket.scala)
  *
  * This file is part of the JNR project.
  *
@@ -15,7 +17,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  * 
- * ported from  https://github.com/softprops/unisockets/blob/master/unisockets-core/src/main/scala/Socket.scala 
  */
 package jnr.unixsocket;
 

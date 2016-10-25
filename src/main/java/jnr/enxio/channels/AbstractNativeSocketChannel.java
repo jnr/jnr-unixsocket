@@ -27,102 +27,134 @@ import java.nio.channels.spi.SelectorProvider;
 import jnr.constants.platform.Errno;
 import jnr.constants.platform.Shutdown;
 
-public abstract class AbstractNativeSocketChannel extends SocketChannel implements ByteChannel, NativeSelectableChannel {
+public abstract class AbstractNativeSocketChannel extends SocketChannel
+		implements ByteChannel, NativeSelectableChannel {
 
-    private int fd = -1;
+	private int fd = -1;
 
-    public AbstractNativeSocketChannel(int fd) {
-        this(NativeSelectorProvider.getInstance(), fd);
-    }
+	public AbstractNativeSocketChannel(int fd) {
+		this(NativeSelectorProvider.getInstance(), fd);
+	}
 
-    AbstractNativeSocketChannel(SelectorProvider provider, int fd) {
-        super(provider);
-        this.fd = fd;
-    }
+	AbstractNativeSocketChannel(SelectorProvider provider, int fd) {
+		super(provider);
+		this.fd = fd;
+	}
 
-    public void setFD(int fd) {
-        this.fd = fd;
-    }
+	public void setFD(int fd) {
+		this.fd = fd;
+	}
 
-    @Override
-    protected void implCloseSelectableChannel() throws IOException {
-        Native.close(fd);
-    }
+	@Override
+	protected void implCloseSelectableChannel() throws IOException {
+		Native.close(fd);
+	}
 
-    @Override
-    protected void implConfigureBlocking(boolean block) throws IOException {
-        Native.setBlocking(fd, block);
-    }
+	@Override
+	protected void implConfigureBlocking(boolean block) throws IOException {
+		Native.setBlocking(fd, block);
+	}
 
-    public final int getFD() {
-        return fd;
-    }
+	public final int getFD() {
+		return fd;
+	}
 
-    public int read(ByteBuffer dst) throws IOException {
-    	
-        ByteBuffer buffer = ByteBuffer.allocate(dst.remaining());
+	public int read(ByteBuffer dst) throws IOException {
 
-        int n = Native.read(fd, buffer);
-        
-        buffer.flip();
+		ByteBuffer buffer = ByteBuffer.allocate(dst.remaining());
 
-        dst.put(buffer);
-        
-        switch (n) {
-	        case 0:
-	            return -1;
-	
-	        case -1:
-	            Errno lastError = Native.getLastError();
-	            switch (lastError) {
-	            case EAGAIN:
-	            case EWOULDBLOCK:
-	                return 0;
-	
-	            default:
-	                throw new IOException(Native.getLastErrorString());
-	            }
-	
-	        default: {
-	
-	            return n;
-	        }
-        }
-    }
+		int n = Native.read(fd, buffer);
 
-    public int write(ByteBuffer src) throws IOException {
+		buffer.flip();
 
-        ByteBuffer buffer = ByteBuffer.allocate(src.remaining());
+		dst.put(buffer);
 
-        buffer.put(src);
+		switch (n) {
+		case 0:
+			return -1;
 
-        buffer.position(0);
+		case -1:
+			Errno lastError = Native.getLastError();
+			switch (lastError) {
+			case EAGAIN:
+			case EWOULDBLOCK:
+				return 0;
 
-        int n = Native.write(fd, buffer);
+			default:
+				throw new IOException(Native.getLastErrorString());
+			}
 
-        if (n < 0) {
-            throw new IOException(Native.getLastErrorString());
-        }
+		default: {
 
-        return n;
-    }
+			return n;
+		}
+		}
+	}
 
-    public SocketChannel shutdownInput() throws IOException {
-        int n = Native.shutdown(fd, SHUT_RD);
-        if (n < 0) {
-            throw new IOException(Native.getLastErrorString());
-        }
-        return this;
-    }
+	@Override
+	public long read(ByteBuffer[] dsts, int offset, int length)
+			throws IOException {
+		long total = 0;
 
-    public SocketChannel shutdownOutput() throws IOException {
-        int n = Native.shutdown(fd, SHUT_WR);
-        if (n < 0) {
-            throw new IOException(Native.getLastErrorString());
-        }
-        return this;
-    }
+		for (int i = 0; i < length; i++) {
+			ByteBuffer dst = dsts[offset + i];
+			long read = read(dst);
+			if (read == -1) {
+				return read;
+			}
+			total += read;
+		}
 
-    private static final int SHUT_RD = Shutdown.SHUT_RD.intValue();
-    private static final int SHUT_WR = Shutdown.SHUT_WR.intValue();
+		return total;
+	}
+
+	public int write(ByteBuffer src) throws IOException {
+
+		ByteBuffer buffer = ByteBuffer.allocate(src.remaining());
+
+		buffer.put(src);
+
+		buffer.position(0);
+
+		int n = Native.write(fd, buffer);
+
+		if (n < 0) {
+			throw new IOException(Native.getLastErrorString());
+		}
+
+		return n;
+	}
+
+	@Override
+	public long write(ByteBuffer[] srcs, int offset, int length)
+			throws IOException {
+
+		long result = 0;
+		int index = 0;
+
+		for (index = offset; index < length; index++) {
+			result += write(srcs[index]);
+		}
+
+		return result;
+	}
+
+	public SocketChannel shutdownInput() throws IOException {
+		int n = Native.shutdown(fd, SHUT_RD);
+		if (n < 0) {
+			throw new IOException(Native.getLastErrorString());
+		}
+		return this;
+	}
+
+	public SocketChannel shutdownOutput() throws IOException {
+		int n = Native.shutdown(fd, SHUT_WR);
+		if (n < 0) {
+			throw new IOException(Native.getLastErrorString());
+		}
+		return this;
+	}
+
+	private static final int SHUT_RD = Shutdown.SHUT_RD.intValue();
+	private static final int SHUT_WR = Shutdown.SHUT_WR.intValue();
 }

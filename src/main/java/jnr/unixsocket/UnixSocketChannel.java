@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Wayne Meissner
+ * Copyright (C) 2016 Marcus Linke
  *
  * This file is part of the JNR project.
  *
@@ -262,12 +262,6 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
 	}
 
 	@Override
-	public long read(ByteBuffer[] dsts, int offset, int length)
-			throws IOException {
-		throw new UnsupportedOperationException("read unsupported");
-	}
-
-	@Override
 	public Socket socket() {
 		return new UnixSocket(this);
 	}
@@ -275,16 +269,9 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
 	@Override
 	public long write(ByteBuffer[] srcs, int offset, int length)
 			throws IOException {
-
+		
 		if (state == State.CONNECTED) {
-			long result = 0;
-			int index = 0;
-
-			for (index = offset; index < length; index++) {
-				result += write(srcs[index]);
-			}
-
-			return result;
+			return super.write(srcs, offset, length);
 		} else if (state == State.IDLE) {
 			return 0;
 		} else {
@@ -313,4 +300,41 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
 			throw new ClosedChannelException();
 		}
 	}
+	
+	/**
+
+	@Override
+	public SocketAddress getRemoteAddress() throws IOException {
+		return remoteAddress;
+	}
+
+	@Override
+	public SocketAddress getLocalAddress() throws IOException {
+		throw new UnsupportedOperationException(
+				"getLocalAddress is not supported");
+	}
+
+	@Override
+	public <T> T getOption(java.net.SocketOption<T> name) throws IOException {
+		throw new UnsupportedOperationException("getOption is not supported");
+	}
+
+	@Override
+	public Set<java.net.SocketOption<?>> supportedOptions() {
+		throw new UnsupportedOperationException(
+				"supportedOptions is not supported");
+	}
+
+	@Override
+	public SocketChannel bind(SocketAddress local) throws IOException {
+		throw new UnsupportedOperationException("bind is not supported");
+	}
+
+	@Override
+	public <T> SocketChannel setOption(java.net.SocketOption<T> name, T value)
+			throws IOException {
+		throw new UnsupportedOperationException("setOption is not supported");
+	}
+	
+	**/
 }
