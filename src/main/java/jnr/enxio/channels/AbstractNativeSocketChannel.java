@@ -59,13 +59,15 @@ public abstract class AbstractNativeSocketChannel extends SocketChannel implemen
     }
 
     public int read(ByteBuffer dst) throws IOException {
-
+    	
         ByteBuffer buffer = ByteBuffer.allocate(dst.remaining());
 
         int n = Native.read(fd, buffer);
+        
+        buffer.flip();
 
-        dst.put(buffer.array());
-
+        dst.put(buffer);
+        
         switch (n) {
 	        case 0:
 	            return -1;
