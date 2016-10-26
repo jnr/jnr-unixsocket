@@ -26,7 +26,8 @@ import jnr.ffi.*;
  */
 abstract class SockAddrUnix extends Struct {
     public final static int ADDR_LENGTH = 108;
-    
+    public final static int HEADER_LENGTH = 2;
+
     protected abstract UTF8String getPathField();
     protected abstract NumberField getFamilyField();
 
@@ -77,7 +78,7 @@ abstract class SockAddrUnix extends Struct {
      * @return The maximum size of the address in bytes
      */
     int getMaximumLength() {
-        return 2 + getPathField().length();
+        return HEADER_LENGTH + getPathField().length();
     }
 
     /**
@@ -86,7 +87,16 @@ abstract class SockAddrUnix extends Struct {
      * @return The actual size of this address, in bytes
      */
     int length() {
-        return 2 + strlen(getPathField());
+        return HEADER_LENGTH + strlen(getPathField());
+    }
+
+    /**
+     * Gets len/family header length
+     *
+     * @return The size of header, in bytes
+     */
+    int getHeaderLength() {
+        return HEADER_LENGTH;
     }
 
     

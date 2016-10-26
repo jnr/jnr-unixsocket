@@ -63,6 +63,9 @@ public class UnixServerSocketChannel extends NativeServerSocketChannel {
             return null;
         }
 
+        // Handle unnamed sockets
+        if (len.getValue() == addr.getHeaderLength()) addr.setPath("");
+
         // Always force the socket back to blocking mode
         Native.setBlocking(clientfd, true);
 
