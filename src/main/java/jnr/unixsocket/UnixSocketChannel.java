@@ -221,22 +221,30 @@ public class UnixSocketChannel extends NativeSocketChannel {
 
     static UnixSocketAddress getpeername(int sockfd) {
         UnixSocketAddress remote = new UnixSocketAddress();
-        IntByReference len = new IntByReference(remote.getStruct().getMaximumLength());
+        SockAddrUnix addr = remote.getStruct();
+        IntByReference len = new IntByReference(addr.getMaximumLength());
 
-        if (Native.libc().getpeername(sockfd, remote.getStruct(), len) < 0) {
+        if (Native.libc().getpeername(sockfd, addr, len) < 0) {
             throw new Error(Native.getLastErrorString());
         }
+
+        // Handle unnamed sockets
+        if (len.getValue() == addr.getHeaderLength()) addr.setPath("");
 
         return remote;
     }
 
     static UnixSocketAddress getsockname(int sockfd) {
         UnixSocketAddress remote = new UnixSocketAddress();
-        IntByReference len = new IntByReference(remote.getStruct().getMaximumLength());
+        SockAddrUnix addr = remote.getStruct();
+        IntByReference len = new IntByReference(addr.getMaximumLength());
 
-        if (Native.libc().getsockname(sockfd, remote.getStruct(), len) < 0) {
+        if (Native.libc().getsockname(sockfd, addr, len) < 0) {
             throw new Error(Native.getLastErrorString());
         }
+
+        // Handle unnamed sockets
+        if (len.getValue() == addr.getHeaderLength()) addr.setPath("");
 
         return remote;
     }
