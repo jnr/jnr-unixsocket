@@ -23,7 +23,9 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
+import java.nio.channels.SocketChannel;
 import java.nio.channels.UnsupportedAddressTypeException;
+import java.util.Set;
 
 import jnr.constants.platform.Errno;
 import jnr.constants.platform.ProtocolFamily;
@@ -301,7 +303,6 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
 		}
 	}
 	
-	/**
 
 	@Override
 	public SocketAddress getRemoteAddress() throws IOException {
@@ -310,8 +311,7 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
 
 	@Override
 	public SocketAddress getLocalAddress() throws IOException {
-		throw new UnsupportedOperationException(
-				"getLocalAddress is not supported");
+		return localAddress;
 	}
 
 	@Override
@@ -335,6 +335,4 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
 			throws IOException {
 		throw new UnsupportedOperationException("setOption is not supported");
 	}
-	
-	**/
 }

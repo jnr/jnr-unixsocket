@@ -139,6 +139,7 @@ public abstract class AbstractNativeSocketChannel extends SocketChannel
 		return result;
 	}
 
+	@Override
 	public SocketChannel shutdownInput() throws IOException {
 		int n = Native.shutdown(fd, SHUT_RD);
 		if (n < 0) {
@@ -147,6 +148,7 @@ public abstract class AbstractNativeSocketChannel extends SocketChannel
 		return this;
 	}
 
+	@Override
 	public SocketChannel shutdownOutput() throws IOException {
 		int n = Native.shutdown(fd, SHUT_WR);
 		if (n < 0) {
