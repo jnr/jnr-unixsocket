@@ -32,6 +32,8 @@ import java.nio.channels.SelectionKey;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static jnr.unixsocket.SockAddrUnix.HEADER_LENGTH;
+
 /**
  * A {@link java.nio.channels.Channel} implementation that uses a native unix socket
  */
@@ -237,14 +239,23 @@ public class UnixSocketChannel extends NativeSocketChannel {
     static UnixSocketAddress getsockname(int sockfd) {
         UnixSocketAddress remote = new UnixSocketAddress();
         SockAddrUnix addr = remote.getStruct();
+        int maxLength = addr.getMaximumLength();
         IntByReference len = new IntByReference(addr.getMaximumLength());
 
         if (Native.libc().getsockname(sockfd, addr, len) < 0) {
             throw new Error(Native.getLastErrorString());
         }
 
-        // Handle unnamed sockets
-        if (len.getValue() == addr.getHeaderLength()) addr.setPath("");
+        int headerLength = addr.getHeaderLength();
+        if (len.getValue() == headerLength) {
+            addr.setPath("");
+        } else if (len.getValue() < maxLength) {            /* On MacOS (perhaps others), we get minimum length */
+            String path = addr.getPath();                   /* of 14 for "" path vs 2 on linux.  Feels like FFI */
+            int newLength = len.getValue() - headerLength;  /* is not handling char * for us right? If a longer */
+            if (newLength < path.length()) {                /* path it seems to record proper length? truncate  */
+                addr.setPath(path.substring(0, len.getValue() - headerLength));  /* to it then.                 */
+            }
+        }
 
         return remote;
     }
