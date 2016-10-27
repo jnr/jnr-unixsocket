@@ -105,9 +105,8 @@ public class BasicFunctionalityTest {
                     // nonblocking result
                     return false;
                 }
-                // TODO: This doesn't work for some reason.
-//                assertEquals(ADDRESS, client.getLocalSocketAddress());
-//                assertEquals("", client.getRemoteSocketAddress().getStruct().getPath());
+                assertEquals(ADDRESS, client.getLocalSocketAddress());
+                assertEquals("", client.getRemoteSocketAddress().getStruct().getPath());
 
                 client.configureBlocking(false);
                 client.register(selector, SelectionKey.OP_READ, new ClientActor(client));
@@ -130,11 +129,10 @@ public class BasicFunctionalityTest {
             try {
                 ByteBuffer buf = ByteBuffer.allocate(1024);
                 int n = channel.read(buf);
-                // TODO: This doesn't work for some reason.
-//                assertEquals(ADDRESS, channel.getRemoteSocketAddress());
+                assertEquals("", channel.getRemoteSocketAddress().getStruct().getPath());
 
                 assertEquals(DATA.length(), n);
-                
+
                 if (n > 0) {
                     buf.flip();
                     channel.write(buf);
