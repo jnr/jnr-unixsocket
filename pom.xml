@@ -35,6 +35,11 @@
       <name>Wayne Meissner</name>
       <email>wmeissner@gmail.com</email>
     </developer>
+    <developer>
+      <id>felfert</id>
+      <name>Fritz Elfert</name>
+      <email>fritz-github@fritz-elfert.de</email>
+    </developer>
   </developers>
 
   <dependencies>
@@ -71,6 +76,46 @@
   </dependencies>
   <build>
     <plugins>
+      <!-- run findbugs check -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>findbugs-maven-plugin</artifactId>
+        <version>3.0.3</version>
+        <executions>
+          <execution>
+            <phase>process-test-classes</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <effort>Max</effort>
+          <includeTests>true</includeTests>
+          <threshold>Low</threshold>
+          <xmlOutput>true</xmlOutput>
+          <failOnError>false</failOnError>
+        </configuration>
+      </plugin>
+
+      <!-- run PMD check -->
+      <plugin>
+        <artifactId>maven-pmd-plugin</artifactId>
+        <version>3.6</version>
+        <configuration>
+          <failOnViolation>false</failOnViolation>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>process-test-classes</phase>
+            <goals>
+              <goal>check</goal>
+              <goal>cpd-check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
