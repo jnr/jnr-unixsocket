@@ -88,7 +88,7 @@ public class UnixDatagramChannel extends AbstractNativeDatagramChannel {
     }
 
 	@Override
-	public DatagramChannel bind(SocketAddress local) throws IOException {
+	public UnixDatagramChannel bind(SocketAddress local) throws IOException {
         if (!(local instanceof UnixSocketAddress)) {
             throw new UnsupportedAddressTypeException();
         }
@@ -113,7 +113,7 @@ public class UnixDatagramChannel extends AbstractNativeDatagramChannel {
         return this;
     }
 
-    public UnixDatagramChannel connect(UnixSocketAddress remote) throws IOException {
+    public UnixDatagramChannel connect(UnixSocketAddress remote) {
         stateLock.writeLock().lock();
         remoteAddress = remote;
         state = State.CONNECTED;
@@ -237,8 +237,8 @@ public class UnixDatagramChannel extends AbstractNativeDatagramChannel {
         try {
             return new UnixDatagramSocket(this);
         } catch (SocketException e) {
+            throw new NullPointerException("Could not create UnixDatagramSocket");
         }
-        return null;
 	}
 
 	@Override
@@ -300,8 +300,7 @@ public class UnixDatagramChannel extends AbstractNativeDatagramChannel {
 
 	@Override
 	public Set<java.net.SocketOption<?>> supportedOptions() {
-		throw new UnsupportedOperationException(
-				"supportedOptions is not supported");
+		throw new UnsupportedOperationException("supportedOptions is not supported");
 	}
 
 	@Override

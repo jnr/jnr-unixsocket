@@ -27,87 +27,132 @@ import java.net.SocketException;
 import java.net.DatagramSocket;
 import java.nio.channels.Channels;
 import java.nio.channels.DatagramChannel;
+import java.nio.channels.UnsupportedAddressTypeException;
 
-class UnixDatagramSocket extends DatagramSocket {
+/**
+ * A SOCK_DGRAM variant of an AF_UNIX socket.
+ * This specializaton of DatagramSocket delegates
+ * all it's funtionality to the corresponding
+ * UnixDatagramSocket.
+ */
+public class UnixDatagramSocket extends DatagramSocket {
 
 	private final UnixDatagramChannel chan;
 
 	volatile private boolean closed = false;
 
-	public UnixDatagramSocket(UnixDatagramChannel chan) throws SocketException {
-        this.chan = chan;
+    /**
+     * Constructs a new instance.
+     * @param channel The channel to use.
+     * @throws SocketException if the socket could not be created.
+     */
+	UnixDatagramSocket(final UnixDatagramChannel channel) throws SocketException {
+        chan = channel;
 	}
 
-	public void bind(SocketAddress addr) {
-		throw new UnsupportedOperationException("bind not supported");
-	}
-
-	@Override
-	public void close() {
-		closed = true;
-	}
-
-	@Override
-	public void connect(SocketAddress addr) {
-		if (addr instanceof UnixSocketAddress) {
-            try {
-			chan.connect((UnixSocketAddress) addr);
-            } catch (IOException e) {
+    /**
+     * Constructs a new bound instance.
+     * @param local The address to bind to.
+     * @throws SocketException if the socket could not be created or bound.
+     */
+    public UnixDatagramSocket(final SocketAddress local) throws SocketException {
+        try {
+            chan = UnixDatagramChannel.open();
+            if (null != local) {
+                if (!(local instanceof UnixSocketAddress)) {
+                    throw new UnsupportedAddressTypeException();
+                }
+                bind(local);
             }
-		} else {
-			throw new IllegalArgumentException("address of type "
-					+ addr.getClass() + " are not supported. Use "
-					+ UnixSocketAddress.class + " instead");
-		}
-	}
+        } catch (IOException e) {
+            throw (SocketException)new SocketException().initCause(e);
+        }
+    }
 
-	@Override
-	public DatagramChannel getChannel() {
-		return chan;
-	}
+    @Override
+    public void bind(final SocketAddress local) throws SocketException {
+        if (null != local) {
+            if (!(local instanceof UnixSocketAddress)) {
+                throw new UnsupportedAddressTypeException();
+            }
+        }
+        try {
+            chan.bind(local);
+        } catch (IOException e) {
+            throw (SocketException)new SocketException().initCause(e);
+        }
+    }
 
-	@Override
-	public InetAddress getInetAddress() {
-		return null;
-	}
+    @Override
+    public void close() {
+        try {
+            chan.close();
+        } catch (IOException e) {
+            // ignore
+        }
+        closed = true;
+    }
 
-	@Override
-	public SocketAddress getLocalSocketAddress() {
-		UnixSocketAddress address = chan.getLocalSocketAddress();
-		if (address != null) {
-			return address;
-		} else {
-			return null;
-		}
-	}
+    @Override
+    public void connect(SocketAddress addr) throws SocketException {
+        try {
+            chan.connect(addr);
+        } catch (IOException e) {
+            throw (SocketException)new SocketException().initCause(e);
+        }
+    }
 
-	@Override
-	public SocketAddress getRemoteSocketAddress() {
-		SocketAddress address = chan.getRemoteSocketAddress();
+    @Override
+    public void connect(InetAddress addr, int port) {
+		throw new UnsupportedOperationException("connect(InetAddress, int) is not supported");
+    }
 
-		if (address != null) {
-			return address;
-		} else {
-			return null;
-		}
-	}
+    @Override
+    public DatagramChannel getChannel() {
+        return chan;
+    }
 
-	@Override
-	public boolean isBound() {
-		return false;
-	}
+    @Override
+    public InetAddress getInetAddress() {
+        return null;
+    }
 
-	@Override
-	public boolean isClosed() {
-		return closed;
-	}
+    @Override
+    public SocketAddress getLocalSocketAddress() {
+        UnixSocketAddress address = chan.getLocalSocketAddress();
+        if (address != null) {
+            return address;
+        } else {
+            return null;
+        }
+    }
 
-	@Override
-	public boolean isConnected() {
-		return chan.isConnected();
-	}
+    @Override
+    public SocketAddress getRemoteSocketAddress() {
+        SocketAddress address = chan.getRemoteSocketAddress();
+        if (address != null) {
+            return address;
+        } else {
+            return null;
+        }
+    }
 
-	/**
+    @Override
+    public boolean isBound() {
+        return (null != chan.getLocalSocketAddress());
+    }
+
+    @Override
+    public boolean isClosed() {
+        return closed;
+    }
+
+    @Override
+    public boolean isConnected() {
+        return chan.isConnected();
+    }
+
+    /**
      * Retrieves the credentials for this UNIX socket. Clients calling this
      * method will receive the server's credentials, and servers will receive
      * the client's credentials. User ID, group ID, and PID are supplied.
@@ -120,6 +165,6 @@ class UnixDatagramSocket extends DatagramSocket {
      * @return the credentials of the remote
      */
     public final Credentials getCredentials() {
-    	return chan.getCredentials();
+        return chan.getCredentials();
     }
 }
