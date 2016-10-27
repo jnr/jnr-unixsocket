@@ -47,8 +47,19 @@ public class UnixDatagramSocket extends DatagramSocket {
      * @throws SocketException if the socket could not be created.
      */
 	UnixDatagramSocket(final UnixDatagramChannel channel) throws SocketException {
+        super(new UnixSocketAddress()); // Avoid DatagamSocket's default constructor
         chan = channel;
 	}
+
+
+    /**
+     * Constructs a new unbound instance.
+     * @throws SocketException if the socket could not be created.
+     */
+	public UnixDatagramSocket() throws SocketException {
+        super(new UnixSocketAddress()); // Avoid DatagamSocket's default constructor
+        chan = null;
+    }
 
     /**
      * Constructs a new bound instance.
@@ -76,19 +87,23 @@ public class UnixDatagramSocket extends DatagramSocket {
                 throw new UnsupportedAddressTypeException();
             }
         }
-        try {
-            chan.bind(local);
-        } catch (IOException e) {
-            throw (SocketException)new SocketException().initCause(e);
+        if (null != chan) {
+            try {
+                chan.bind(local);
+            } catch (IOException e) {
+                throw (SocketException)new SocketException().initCause(e);
+            }
         }
     }
 
     @Override
     public void close() {
-        try {
-            chan.close();
-        } catch (IOException e) {
-            // ignore
+        if (null != chan) {
+            try {
+                chan.close();
+            } catch (IOException e) {
+                // ignore
+            }
         }
         closed = true;
     }
@@ -104,7 +119,7 @@ public class UnixDatagramSocket extends DatagramSocket {
 
     @Override
     public void connect(InetAddress addr, int port) {
-		throw new UnsupportedOperationException("connect(InetAddress, int) is not supported");
+        throw new UnsupportedOperationException("connect(InetAddress, int) is not supported");
     }
 
     @Override
@@ -139,6 +154,9 @@ public class UnixDatagramSocket extends DatagramSocket {
 
     @Override
     public boolean isBound() {
+        if (null == chan) {
+            return false;
+        }
         return (null != chan.getLocalSocketAddress());
     }
 

@@ -103,6 +103,7 @@
         <artifactId>maven-pmd-plugin</artifactId>
         <version>3.6</version>
         <configuration>
+          <linkXRef>false</linkXRef>
           <failOnViolation>false</failOnViolation>
         </configuration>
         <executions>
