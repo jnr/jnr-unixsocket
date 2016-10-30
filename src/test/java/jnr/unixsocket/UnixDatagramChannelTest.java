@@ -1,5 +1,9 @@
 package jnr.unixsocket;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.util.regex.Pattern;
+
 import org.junit.Test;
 import org.junit.Assume;
 
@@ -30,6 +34,20 @@ public class UnixDatagramChannelTest {
         // see http://man7.org/linux/man-pages/man7/unix.7.html
         final String RE = "^\\000([0-9a-f]){5}$";
 
+        UnixDatagramChannel ch = UnixDatagramChannel.open();
+        ch.bind(null);
+        UnixSocketAddress a = ch.getLocalSocketAddress();
+        assertTrue("socket path pattern matches " + RE, a.path().matches(RE));
+    }
+
+    @Test
+    public void testAutobindEmulation() throws Exception {
+        Assume.assumeTrue(OS.LINUX != Platform.getNativePlatform().getOS());
+
+        File f = Files.createTempFile("jnr-unixsocket-tmp", ".end").toFile();
+        f.delete();
+        String path = f.getPath().replaceAll("-tmp.*\\.end", "-tmp");
+        final String RE = "^" + Pattern.quote(path) + ".*\\.sock$";
         UnixDatagramChannel ch = UnixDatagramChannel.open();
         ch.bind(null);
         UnixSocketAddress a = ch.getLocalSocketAddress();
