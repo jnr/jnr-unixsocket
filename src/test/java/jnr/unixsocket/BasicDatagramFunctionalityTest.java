@@ -36,7 +36,11 @@ import java.nio.channels.Selector;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
+import org.junit.Assume;
 import org.junit.Test;
+
+import jnr.ffi.Platform;
+import jnr.ffi.Platform.OS;
 
 import static junit.framework.Assert.*;
 
@@ -111,6 +115,8 @@ public class BasicDatagramFunctionalityTest {
 
     @Test
     public void largeBasicOperationTest() throws Throwable {
+        Assume.assumeTrue(OS.LINUX == Platform.getNativePlatform().getOS());
+
         basicOperation(1000L * DATA.length());
     }
 
