@@ -18,17 +18,16 @@
 
 package jnr.unixsocket;
 
-import jnr.constants.platform.ProtocolFamily;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
-import jnr.ffi.Platform;
-import jnr.ffi.Platform.OS;
+import jnr.constants.platform.ProtocolFamily;
 
 public class UnixSocketAddress extends java.net.SocketAddress {
 
-    private static transient OS currentOS = Platform.getNativePlatform().getOS();
-
     private static final long serialVersionUID = 4821337010221569096L;
-    private final transient SockAddrUnix address;
+    private transient SockAddrUnix address;
 
     UnixSocketAddress() {
         address = SockAddrUnix.create();
@@ -55,11 +54,25 @@ public class UnixSocketAddress extends java.net.SocketAddress {
         return address.length();
     }
 
+    /**
+     * Retrieves the path.
+     * @return The path of this AF_UNIX address.
+     * Note: On Linux,  can contain a leading NUL byte, if this address
+     * resides in abstract namespace.
+     */
     public String path() {
         return address.getPath();
     }
 
-    private String humanReadablePath() {
+    /**
+     * Returns a human readable path.
+     * On Linux, AF_UNIX sockets can be bound/connected in abstract namespace.
+     * This is denoted by a leading NUL byte in the path.
+     * In order to be properly displayed, this method returns a path prefixed
+     * by '@' like netstat, lsof an similar tools.
+     * @return The human readable path of this address.
+     */
+    public String humanReadablePath() {
         String ret = path();
         // Handle abstract namespace like netstat: replace NUL by '@'
         if (ret.indexOf('\000') == 0) {
@@ -68,6 +81,10 @@ public class UnixSocketAddress extends java.net.SocketAddress {
         return ret;
     }
 
+    /**
+     * Retrieves a human readable description of this address.
+     * @return The human readable description of this address.
+     */
     @Override
     public String toString() {
         return "[family=" + address.getFamily() + " path=" + humanReadablePath() + "]";
@@ -88,5 +105,22 @@ public class UnixSocketAddress extends java.net.SocketAddress {
     @Override
     public int hashCode() {
         return address.hashCode();
+    }
+
+    // Serializable
+    private void writeObject(ObjectOutputStream o) throws IOException {
+        o.defaultWriteObject();
+        o.writeObject(path());
+    }
+
+    private void readObject(ObjectInputStream o)
+        throws IOException, ClassNotFoundException {
+        o.defaultReadObject();
+        String path = (String)o.readObject();
+        if (null == address) {
+            address = SockAddrUnix.create();
+        }
+        address.setPath(path);
+        address.setFamily(ProtocolFamily.PF_UNIX);
     }
 }

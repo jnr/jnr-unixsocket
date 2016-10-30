@@ -46,11 +46,11 @@ public class UnixServer {
 
             while (sel.select() > 0) {
                 Set<SelectionKey> keys = sel.selectedKeys();
-		Iterator<SelectionKey> iterator = keys.iterator();
+                Iterator<SelectionKey> iterator = keys.iterator();
                 boolean running = false;
                 boolean cancelled = false;
-		while ( iterator.hasNext()  ) {
-		    SelectionKey k = iterator.next();
+                while ( iterator.hasNext()  ) {
+                    SelectionKey k = iterator.next();
                     Actor a = (Actor) k.attachment();
                     if (a.rxready()) {
                         running = true;
@@ -58,7 +58,7 @@ public class UnixServer {
                         k.cancel();
                         cancelled = true;
                     }
-		    iterator.remove();
+                    iterator.remove();
                 }
                 if (!running && cancelled) {
                     System.out.println("No Actors Running any more");

@@ -36,25 +36,25 @@ import java.nio.channels.UnsupportedAddressTypeException;
  */
 public class UnixDatagramSocket extends DatagramSocket {
 
-	private final UnixDatagramChannel chan;
+    private final UnixDatagramChannel chan;
 
-	volatile private boolean closed = false;
+    volatile private boolean closed = false;
 
     /**
      * Constructs a new instance.
      * @param channel The channel to use.
      * @throws SocketException if the socket could not be created.
      */
-	UnixDatagramSocket(final UnixDatagramChannel channel) throws SocketException {
+    UnixDatagramSocket(final UnixDatagramChannel channel) throws SocketException {
         chan = channel;
-	}
+    }
 
 
     /**
      * Constructs a new unbound instance.
      * @throws SocketException if the socket could not be created.
      */
-	public UnixDatagramSocket() throws SocketException {
+    public UnixDatagramSocket() throws SocketException {
         chan = null;
     }
 

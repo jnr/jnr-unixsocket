@@ -15,6 +15,8 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import org.junit.Test;
 
 import static junit.framework.Assert.*;
@@ -69,9 +71,9 @@ public class BasicFunctionalityTest {
 
         assertEquals(ADDRESS, channel2.getRemoteSocketAddress());
 
-        Channels.newOutputStream(channel2).write(DATA.getBytes());
+        Channels.newOutputStream(channel2).write(DATA.getBytes(UTF_8));
 
-        InputStreamReader r = new InputStreamReader(Channels.newInputStream(channel2));
+        InputStreamReader r = new InputStreamReader(Channels.newInputStream(channel2), UTF_8);
         CharBuffer result = CharBuffer.allocate(1024);
         r.read(result);
 

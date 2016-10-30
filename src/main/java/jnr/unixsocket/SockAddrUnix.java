@@ -18,6 +18,8 @@
 
 package jnr.unixsocket;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import jnr.constants.platform.ProtocolFamily;
 import jnr.ffi.Platform;
 import jnr.ffi.Platform.OS;
@@ -125,7 +127,7 @@ abstract class SockAddrUnix extends Struct {
         if (0 != ba[0]) {
             len -= 1;
         }
-        return new java.lang.String(java.util.Arrays.copyOf(ba, len));
+        return new java.lang.String(java.util.Arrays.copyOf(ba, len), UTF_8);
     }
 
     /**

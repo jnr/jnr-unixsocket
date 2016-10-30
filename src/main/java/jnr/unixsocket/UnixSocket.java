@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2009 Wayne Meissner
  * Copyright (C) 2016 Marcus Linke
  * 
  * (ported from https://github.com/softprops/unisockets/blob/master/unisockets-core/src/main/scala/Socket.scala)
@@ -30,132 +31,132 @@ import java.nio.channels.SocketChannel;
 
 class UnixSocket extends java.net.Socket {
 
-	private UnixSocketChannel chan;
+    private UnixSocketChannel chan;
 
-	volatile private boolean closed = false;
-	volatile private boolean indown = false;
-	volatile private boolean outdown = false;
+    volatile private boolean closed = false;
+    volatile private boolean indown = false;
+    volatile private boolean outdown = false;
 
-	private InputStream in;
-	private OutputStream out;
+    private InputStream in;
+    private OutputStream out;
 
-	public UnixSocket(UnixSocketChannel chan) {
-		this.chan = chan;
-		in = Channels.newInputStream(chan);
-		out = Channels.newOutputStream(chan);
-	}
+    public UnixSocket(UnixSocketChannel chan) {
+        this.chan = chan;
+        in = Channels.newInputStream(chan);
+        out = Channels.newOutputStream(chan);
+    }
 
-	public void bind(SocketAddress addr) {
-		throw new UnsupportedOperationException("bind not supported");
-	}
+    public void bind(SocketAddress addr) {
+        throw new UnsupportedOperationException("bind not supported");
+    }
 
-	@Override
-	public void close() throws IOException {
-		chan.close();
-		closed = true;
-	}
+    @Override
+    public void close() throws IOException {
+        chan.close();
+        closed = true;
+    }
 
-	@Override
-	public void connect(SocketAddress addr) throws IOException {
-		connect(addr, 0);
-	}
+    @Override
+    public void connect(SocketAddress addr) throws IOException {
+        connect(addr, 0);
+    }
 
-	public void connect(SocketAddress addr, Integer timeout) throws IOException {
-		if (addr instanceof UnixSocketAddress) {
-			chan.connect((UnixSocketAddress) addr);
-		} else {
-			throw new IllegalArgumentException("address of type "
-					+ addr.getClass() + " are not supported. Use "
-					+ UnixSocketAddress.class + " instead");
-		}
-	}
+    public void connect(SocketAddress addr, Integer timeout) throws IOException {
+        if (addr instanceof UnixSocketAddress) {
+            chan.connect((UnixSocketAddress) addr);
+        } else {
+            throw new IllegalArgumentException("address of type "
+                    + addr.getClass() + " are not supported. Use "
+                    + UnixSocketAddress.class + " instead");
+        }
+    }
 
-	@Override
-	public SocketChannel getChannel() {
-		return chan;
-	}
+    @Override
+    public SocketChannel getChannel() {
+        return chan;
+    }
 
-	@Override
-	public InetAddress getInetAddress() {
-		return null;
-	}
+    @Override
+    public InetAddress getInetAddress() {
+        return null;
+    }
 
-	public InputStream getInputStream() throws IOException {
-		if (chan.isConnected()) {
-			return in;
-		} else {
-			throw new IOException("not connected");
-		}
-	}
+    public InputStream getInputStream() throws IOException {
+        if (chan.isConnected()) {
+            return in;
+        } else {
+            throw new IOException("not connected");
+        }
+    }
 
-	@Override
-	public SocketAddress getLocalSocketAddress() {
-		UnixSocketAddress address = chan.getLocalSocketAddress();
-		if (address != null) {
-			return address;
-		} else {
-			return null;
-		}
-	}
+    @Override
+    public SocketAddress getLocalSocketAddress() {
+        UnixSocketAddress address = chan.getLocalSocketAddress();
+        if (address != null) {
+            return address;
+        } else {
+            return null;
+        }
+    }
 
-	@Override
-	public OutputStream getOutputStream() throws IOException {
-		if (chan.isConnected()) {
-			return out;
-		} else {
-			throw new IOException("not connected");
-		}
-	}
+    @Override
+    public OutputStream getOutputStream() throws IOException {
+        if (chan.isConnected()) {
+            return out;
+        } else {
+            throw new IOException("not connected");
+        }
+    }
 
-	@Override
-	public SocketAddress getRemoteSocketAddress() {
-		SocketAddress address = chan.getRemoteSocketAddress();
+    @Override
+    public SocketAddress getRemoteSocketAddress() {
+        SocketAddress address = chan.getRemoteSocketAddress();
 
-		if (address != null) {
-			return address;
-		} else {
-			return null;
-		}
-	}
+        if (address != null) {
+            return address;
+        } else {
+            return null;
+        }
+    }
 
-	@Override
-	public boolean isBound() {
-		return false;
-	}
+    @Override
+    public boolean isBound() {
+        return false;
+    }
 
-	@Override
-	public boolean isClosed() {
-		return closed;
-	}
+    @Override
+    public boolean isClosed() {
+        return closed;
+    }
 
-	@Override
-	public boolean isConnected() {
-		return chan.isConnected();
-	}
+    @Override
+    public boolean isConnected() {
+        return chan.isConnected();
+    }
 
-	@Override
-	public boolean isInputShutdown() {
-		return indown;
-	}
+    @Override
+    public boolean isInputShutdown() {
+        return indown;
+    }
 
-	@Override
-	public boolean isOutputShutdown() {
-		return outdown;
-	}
+    @Override
+    public boolean isOutputShutdown() {
+        return outdown;
+    }
 
-	@Override
-	public void shutdownInput() throws IOException {
-		chan.shutdownInput();
-		indown = true;
-	}
+    @Override
+    public void shutdownInput() throws IOException {
+        chan.shutdownInput();
+        indown = true;
+    }
 
-	@Override
-	public void shutdownOutput() throws IOException {
-		chan.shutdownOutput();
-		outdown = true;
-	}
-	
-	/**
+    @Override
+    public void shutdownOutput() throws IOException {
+        chan.shutdownOutput();
+        outdown = true;
+    }
+
+    /**
      * Retrieves the credentials for this UNIX socket. Clients calling this
      * method will receive the server's credentials, and servers will receive
      * the client's credentials. User ID, group ID, and PID are supplied.
@@ -168,6 +169,6 @@ class UnixSocket extends java.net.Socket {
      * @return the credentials of the remote
      */
     public final Credentials getCredentials() {
-    	return chan.getCredentials();
+        return chan.getCredentials();
     }
 }

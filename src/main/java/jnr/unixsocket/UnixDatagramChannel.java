@@ -84,14 +84,14 @@ public class UnixDatagramChannel extends AbstractNativeDatagramChannel {
         connect(remote);
     }
 
-	@Override
-	public UnixDatagramChannel bind(SocketAddress local) throws IOException {
+    @Override
+    public UnixDatagramChannel bind(SocketAddress local) throws IOException {
         if (null != local && !(local instanceof UnixSocketAddress)) {
             throw new UnsupportedAddressTypeException();
         }
         localAddress = Common.bind(getFD(), (UnixSocketAddress)local);
         return this;
-	}
+    }
 
     public UnixDatagramChannel connect(UnixSocketAddress remote) {
         stateLock.writeLock().lock();
@@ -181,94 +181,94 @@ public class UnixDatagramChannel extends AbstractNativeDatagramChannel {
         return n;
     }
 
-	@Override
-	public DatagramChannel connect(SocketAddress remote) throws IOException {
-		if (remote instanceof UnixSocketAddress) {
-			return connect(((UnixSocketAddress) remote));
-		} else {
-			throw new UnsupportedAddressTypeException();
-		}
-	}
+    @Override
+    public DatagramChannel connect(SocketAddress remote) throws IOException {
+        if (remote instanceof UnixSocketAddress) {
+            return connect(((UnixSocketAddress) remote));
+        } else {
+            throw new UnsupportedAddressTypeException();
+        }
+    }
 
-	@Override
-	public DatagramSocket socket() {
+    @Override
+    public DatagramSocket socket() {
         try {
             return new UnixDatagramSocket(this);
         } catch (SocketException e) {
             throw new NullPointerException("Could not create UnixDatagramSocket");
         }
-	}
-
-	@Override
-	public long write(ByteBuffer[] srcs, int offset, int length)
-			throws IOException {
-		
-		if (state == State.CONNECTED) {
-			return super.write(srcs, offset, length);
-		} else if (state == State.IDLE) {
-			return 0;
-		} else {
-			throw new ClosedChannelException();
-		}
-	}
-
-	@Override
-	public int read(ByteBuffer dst) throws IOException {
-		if (state == State.CONNECTED) {
-			return super.read(dst);
-		} else if (state == State.IDLE) {
-			return 0;
-		} else {
-			throw new ClosedChannelException();
-		}
-	}
-
-	@Override
-	public int write(ByteBuffer src) throws IOException {
-		if (state == State.CONNECTED) {
-			return super.write(src);
-		} else if (state == State.IDLE) {
-			return 0;
-		} else {
-			throw new ClosedChannelException();
-		}
-	}
-	
-
-	@Override
-	public SocketAddress getRemoteAddress() throws IOException {
-		return remoteAddress;
-	}
-
-	@Override
-	public SocketAddress getLocalAddress() throws IOException {
-		return localAddress;
-	}
-
-	@Override
-	public <T> T getOption(java.net.SocketOption<T> name) throws IOException {
-		throw new UnsupportedOperationException("getOption is not supported");
-	}
-
-	@Override
-	public <T> DatagramChannel setOption(java.net.SocketOption<T> name, T value)
-			throws IOException {
-		throw new UnsupportedOperationException("setOption is not supported");
-	}
-
-	@Override
-	public Set<java.net.SocketOption<?>> supportedOptions() {
-		throw new UnsupportedOperationException("supportedOptions is not supported");
-	}
-
-	@Override
-    public MembershipKey join(InetAddress group, NetworkInterface interf) {
-		throw new UnsupportedOperationException("join is not supported");
     }
 
-	@Override
+    @Override
+    public long write(ByteBuffer[] srcs, int offset, int length)
+    throws IOException {
+
+    if (state == State.CONNECTED) {
+        return super.write(srcs, offset, length);
+    } else if (state == State.IDLE) {
+        return 0;
+    } else {
+        throw new ClosedChannelException();
+    }
+    }
+
+    @Override
+    public int read(ByteBuffer dst) throws IOException {
+        if (state == State.CONNECTED) {
+            return super.read(dst);
+        } else if (state == State.IDLE) {
+            return 0;
+        } else {
+            throw new ClosedChannelException();
+        }
+    }
+
+    @Override
+    public int write(ByteBuffer src) throws IOException {
+        if (state == State.CONNECTED) {
+            return super.write(src);
+        } else if (state == State.IDLE) {
+            return 0;
+        } else {
+            throw new ClosedChannelException();
+        }
+    }
+
+
+    @Override
+    public SocketAddress getRemoteAddress() throws IOException {
+        return remoteAddress;
+    }
+
+    @Override
+    public SocketAddress getLocalAddress() throws IOException {
+        return localAddress;
+    }
+
+    @Override
+    public <T> T getOption(java.net.SocketOption<T> name) throws IOException {
+        throw new UnsupportedOperationException("getOption is not supported");
+    }
+
+    @Override
+    public <T> DatagramChannel setOption(java.net.SocketOption<T> name, T value)
+    throws IOException {
+    throw new UnsupportedOperationException("setOption is not supported");
+    }
+
+    @Override
+    public Set<java.net.SocketOption<?>> supportedOptions() {
+        throw new UnsupportedOperationException("supportedOptions is not supported");
+    }
+
+    @Override
+    public MembershipKey join(InetAddress group, NetworkInterface interf) {
+        throw new UnsupportedOperationException("join is not supported");
+    }
+
+    @Override
     public MembershipKey join(InetAddress group, NetworkInterface interf, InetAddress source) {
-		throw new UnsupportedOperationException("join is not supported");
+        throw new UnsupportedOperationException("join is not supported");
     }
 
 }

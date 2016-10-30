@@ -71,7 +71,7 @@ public class BasicDatagramFunctionalityTest {
                 while (null == serverException) {
                     try {
                         rxbuf.clear();
-                        SocketAddress from = serverChannel.receive(rxbuf);
+                        serverChannel.receive(rxbuf);
                         rxbuf.flip();
                         int count = rxbuf.limit();
                         rxdata.append(StandardCharsets.UTF_8.decode(rxbuf).toString());

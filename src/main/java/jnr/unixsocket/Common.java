@@ -67,27 +67,25 @@ final class Common {
     static UnixSocketAddress getsockname(int sockfd) {
         UnixSocketAddress local = new UnixSocketAddress();
         SockAddrUnix addr = local.getStruct();
-        int maxLength = addr.getMaximumLength();
-		IntByReference len = new IntByReference(addr.getMaximumLength());
+        IntByReference len = new IntByReference(addr.getMaximumLength());
 
-		if (Native.libc().getsockname(sockfd, addr, len) < 0) {
-			throw new Error(Native.getLastErrorString());
-		}
+        if (Native.libc().getsockname(sockfd, addr, len) < 0) {
+            throw new Error(Native.getLastErrorString());
+        }
         addr.updatePath(len.getValue());
         return local;
     }
 
-	static UnixSocketAddress getpeername(int sockfd) {
-		UnixSocketAddress remote = new UnixSocketAddress();
+    static UnixSocketAddress getpeername(int sockfd) {
+        UnixSocketAddress remote = new UnixSocketAddress();
         SockAddrUnix addr = remote.getStruct();
-        int maxLength = addr.getMaximumLength();
-		IntByReference len = new IntByReference(maxLength);
+        IntByReference len = new IntByReference(addr.getMaximumLength());
 
-		if (Native.libc().getpeername(sockfd, addr, len) < 0) {
-			throw new Error(Native.getLastErrorString());
-		}
+        if (Native.libc().getpeername(sockfd, addr, len) < 0) {
+            throw new Error(Native.getLastErrorString());
+        }
         addr.updatePath(len.getValue());
-		return remote;
-	}
+        return remote;
+    }
 
 }
