@@ -43,7 +43,7 @@ public final class Credentials {
         return java.lang.String.format("[uid=%d gid=%d pid=%d]", getUid(), getGid(), getPid());
     }
 
-    static final Credentials getCredentials(int fd) {
+    static Credentials getCredentials(int fd) {
         Ucred c = new Ucred();
         int error = Native.getsockopt(fd, SocketLevel.SOL_SOCKET, SocketOption.SO_PEERCRED, c);
         if (error != 0) {

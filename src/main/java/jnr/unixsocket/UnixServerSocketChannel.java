@@ -51,7 +51,8 @@ public class UnixServerSocketChannel extends NativeServerSocketChannel {
     public UnixSocketChannel accept() throws IOException {
         UnixSocketAddress remote = new UnixSocketAddress();
         SockAddrUnix addr = remote.getStruct();
-        IntByReference len = new IntByReference(addr.getMaximumLength());
+        int maxLength = addr.getMaximumLength();
+        IntByReference len = new IntByReference(maxLength);
 
         int clientfd = Native.accept(getFD(), addr, len);
 
@@ -63,8 +64,8 @@ public class UnixServerSocketChannel extends NativeServerSocketChannel {
             return null;
         }
 
-        // Handle unnamed sockets
-        if (len.getValue() == addr.getHeaderLength()) addr.setPath("");
+        // Handle unnamed sockets and sockets in Linux' abstract namespace
+        addr.updatePath(len.getValue());
 
         // Always force the socket back to blocking mode
         Native.setBlocking(clientfd, true);

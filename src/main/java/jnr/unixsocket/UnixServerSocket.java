@@ -40,11 +40,11 @@ public class UnixServerSocket {
         return new UnixSocket(channel.accept());
     }
 
-    public void bind(SocketAddress endpoint) throws java.io.IOException {
+    public void bind(SocketAddress endpoint) throws IOException {
         bind(endpoint, 128);
     }
 
-    public void bind(SocketAddress endpoint, int backlog) throws java.io.IOException {
+    public void bind(SocketAddress endpoint, int backlog) throws IOException {
         if (!(endpoint instanceof UnixSocketAddress)) {
             throw new IOException("Invalid address");
         }

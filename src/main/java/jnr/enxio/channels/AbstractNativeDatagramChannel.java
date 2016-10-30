@@ -24,121 +24,56 @@ import java.nio.channels.ByteChannel;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.spi.SelectorProvider;
 
-import jnr.constants.platform.Errno;
-
-/**
- * A {@link java.nio.channels.Channel} implementation that uses a native unix socket
- */
 public abstract class AbstractNativeDatagramChannel extends DatagramChannel
-        implements ByteChannel, NativeSelectableChannel {
+    implements ByteChannel, NativeSelectableChannel {
 
-	private int fd = -1;
+    private final Common common;
 
-	public AbstractNativeDatagramChannel(int fd) {
-		this(NativeSelectorProvider.getInstance(), fd);
-	}
+    public AbstractNativeDatagramChannel(int fd) {
+        this(NativeSelectorProvider.getInstance(), fd);
+    }
 
-	AbstractNativeDatagramChannel(SelectorProvider provider, int fd) {
-		super(provider);
-		this.fd = fd;
-	}
+    AbstractNativeDatagramChannel(SelectorProvider provider, int fd) {
+        super(provider);
+        common = new Common(fd);
+    }
 
-	public void setFD(int fd) {
-		this.fd = fd;
-	}
+    public void setFD(int fd) {
+        common.setFD(fd);
+    }
 
-	@Override
-	protected void implCloseSelectableChannel() throws IOException {
-		Native.close(fd);
-	}
+    public final int getFD() {
+        return common.getFD();
+    }
 
-	@Override
-	protected void implConfigureBlocking(boolean block) throws IOException {
-		Native.setBlocking(fd, block);
-	}
+    @Override
+    protected void implCloseSelectableChannel() throws IOException {
+        Native.close(common.getFD());
+    }
 
-	public final int getFD() {
-		return fd;
-	}
+    @Override
+    protected void implConfigureBlocking(boolean block) throws IOException {
+        Native.setBlocking(common.getFD(), block);
+    }
 
-	public int read(ByteBuffer dst) throws IOException {
+    public int read(ByteBuffer dst) throws IOException {
+        return common.read(dst);
+    }
 
-		ByteBuffer buffer = ByteBuffer.allocate(dst.remaining());
+    @Override
+    public long read(ByteBuffer[] dsts, int offset,
+            int length) throws IOException {
+        return common.read(dsts, offset, length);
+    }
 
-		int n = Native.read(fd, buffer);
+    public int write(ByteBuffer src) throws IOException {
+        return common.write(src);
+    }
 
-		buffer.flip();
-
-		dst.put(buffer);
-
-		switch (n) {
-		case 0:
-			return -1;
-
-		case -1:
-			Errno lastError = Native.getLastError();
-			switch (lastError) {
-			case EAGAIN:
-			case EWOULDBLOCK:
-				return 0;
-
-			default:
-				throw new IOException(Native.getLastErrorString());
-			}
-
-		default: {
-
-			return n;
-		}
-		}
-	}
-
-	@Override
-	public long read(ByteBuffer[] dsts, int offset, int length)
-			throws IOException {
-		long total = 0;
-
-		for (int i = 0; i < length; i++) {
-			ByteBuffer dst = dsts[offset + i];
-			long read = read(dst);
-			if (read == -1) {
-				return read;
-			}
-			total += read;
-		}
-
-		return total;
-	}
-
-	public int write(ByteBuffer src) throws IOException {
-
-		ByteBuffer buffer = ByteBuffer.allocate(src.remaining());
-
-		buffer.put(src);
-
-		buffer.position(0);
-
-		int n = Native.write(fd, buffer);
-
-		if (n < 0) {
-			throw new IOException(Native.getLastErrorString());
-		}
-
-		return n;
-	}
-
-	@Override
-	public long write(ByteBuffer[] srcs, int offset, int length)
-			throws IOException {
-
-		long result = 0;
-		int index = 0;
-
-		for (index = offset; index < length; index++) {
-			result += write(srcs[index]);
-		}
-
-		return result;
-	}
+    @Override
+    public long write(ByteBuffer[] srcs, int offset,
+            int length) throws IOException {
+        return common.write(srcs, offset, length);
+    }
 
 }

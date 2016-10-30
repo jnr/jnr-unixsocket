@@ -28,7 +28,6 @@ import jnr.constants.platform.Sock;
 import jnr.constants.platform.SocketLevel;
 import jnr.constants.platform.SocketOption;
 import jnr.ffi.LastError;
-import jnr.ffi.Library;
 import jnr.ffi.LibraryLoader;
 import jnr.ffi.Platform;
 import jnr.ffi.Pointer;
@@ -47,11 +46,11 @@ class Native {
     static final String[] libnames = Platform.getNativePlatform().getOS() == Platform.OS.SOLARIS
                         ? new String[] { "socket", "nsl", Platform.getNativePlatform().getStandardCLibraryName() }
                         : new String[] { Platform.getNativePlatform().getStandardCLibraryName() };
-    public static interface LibC {
+    public interface LibC {
         
-        public static final int F_GETFL = jnr.constants.platform.Fcntl.F_GETFL.intValue();
-        public static final int F_SETFL = jnr.constants.platform.Fcntl.F_SETFL.intValue();
-        public static final int O_NONBLOCK = jnr.constants.platform.OpenFlags.O_NONBLOCK.intValue();
+        int F_GETFL = jnr.constants.platform.Fcntl.F_GETFL.intValue();
+        int F_SETFL = jnr.constants.platform.Fcntl.F_SETFL.intValue();
+        int O_NONBLOCK = jnr.constants.platform.OpenFlags.O_NONBLOCK.intValue();
 
         int socket(int domain, int type, int protocol);
         int listen(int fd, int backlog);
@@ -121,11 +120,11 @@ class Native {
     }
 
     static String getLastErrorString() {
-        return strerror(LastError.getLastError(jnr.ffi.Runtime.getSystemRuntime()));
+        return strerror(LastError.getLastError(Runtime.getSystemRuntime()));
     }
 
     static Errno getLastError() {
-        return Errno.valueOf(LastError.getLastError(jnr.ffi.Runtime.getSystemRuntime()));
+        return Errno.valueOf(LastError.getLastError(Runtime.getSystemRuntime()));
     }
 
     static String strerror(int error) {
@@ -165,7 +164,7 @@ class Native {
             DefaultNativeTimeval t = new DefaultNativeTimeval(Runtime.getSystemRuntime());
             ref = new IntByReference(DefaultNativeTimeval.size(t));
             Native.libsocket().getsockopt(s, level.intValue(), optname, t, ref);
-            return (t.tv_sec.intValue() * 1000) + (t.tv_usec.intValue() / 1000);
+            return (t.tv_sec.intValue() * 1000 + t.tv_usec.intValue() / 1000);
         } else {
             ByteBuffer buf = ByteBuffer.allocate(4);
             buf.order(ByteOrder.BIG_ENDIAN);
@@ -189,7 +188,7 @@ class Native {
 
     public static int sendto(int fd, ByteBuffer src, SockAddrUnix addr, int len) throws IOException {
         if (src == null) {
-            throw new NullPointerException("Source buffer cannot be null");
+            throw new IllegalArgumentException("Source buffer cannot be null");
         }
 
         int n;
@@ -206,7 +205,7 @@ class Native {
 
     public static int recvfrom(int fd, ByteBuffer dst, SockAddrUnix addr) throws IOException {
         if (dst == null) {
-            throw new NullPointerException("Destination buffer cannot be null");
+            throw new IllegalArgumentException("Destination buffer cannot be null");
         }
         if (dst.isReadOnly()) {
             throw new IllegalArgumentException("Read-only buffer");

@@ -19,35 +19,27 @@
 package jnr.unixsocket;
 
 import java.io.IOException;
-import java.net.Socket;
+
+import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
+import java.nio.channels.DatagramChannel;
+import java.nio.channels.MembershipKey;
+import java.nio.channels.UnsupportedAddressTypeException;
+
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketAddress;
 import java.net.SocketException;
-import java.nio.ByteBuffer;
-import java.nio.channels.ClosedChannelException;
-import java.nio.channels.DatagramChannel;
-import java.nio.channels.MembershipKey;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.UnsupportedAddressTypeException;
-import java.util.Set;
-
-import jnr.constants.platform.Errno;
-import jnr.constants.platform.ProtocolFamily;
-import jnr.constants.platform.Sock;
-import jnr.constants.platform.SocketLevel;
-import jnr.constants.platform.SocketOption;
-import jnr.enxio.channels.AbstractNativeDatagramChannel;
-import jnr.ffi.*;
-import jnr.ffi.byref.IntByReference;
 
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.Set;
 
-/**
- * A {@link java.nio.channels.Channel} implementation that uses a native unix socket
- */
+import jnr.constants.platform.ProtocolFamily;
+import jnr.constants.platform.Sock;
+import jnr.enxio.channels.AbstractNativeDatagramChannel;
+
 public class UnixDatagramChannel extends AbstractNativeDatagramChannel {
     static enum State {
         UNINITIALIZED,
@@ -67,7 +59,8 @@ public class UnixDatagramChannel extends AbstractNativeDatagramChannel {
         int[] sockets = { -1, -1 };
         Native.socketpair(ProtocolFamily.PF_UNIX, Sock.SOCK_DGRAM, 0, sockets);
         return new UnixDatagramChannel[] {
-            new UnixDatagramChannel(sockets[0]), new UnixDatagramChannel(sockets[1])
+            new UnixDatagramChannel(sockets[0], State.CONNECTED),
+                new UnixDatagramChannel(sockets[1], State.CONNECTED)
         };
     }
 
@@ -76,9 +69,13 @@ public class UnixDatagramChannel extends AbstractNativeDatagramChannel {
     }
 
     UnixDatagramChannel(int fd) {
+        this(fd, State.IDLE);
+    }
+
+    UnixDatagramChannel(int fd, State initialState) {
         super(fd);
         stateLock.writeLock().lock();
-        state = State.IDLE;
+        state = initialState;
         stateLock.writeLock().unlock();
     }
 
@@ -89,29 +86,12 @@ public class UnixDatagramChannel extends AbstractNativeDatagramChannel {
 
 	@Override
 	public UnixDatagramChannel bind(SocketAddress local) throws IOException {
-        if (!(local instanceof UnixSocketAddress)) {
+        if (null != local && !(local instanceof UnixSocketAddress)) {
             throw new UnsupportedAddressTypeException();
         }
-        return bind((UnixSocketAddress)local);
-	}
-
-    private UnixDatagramChannel bind(UnixSocketAddress local) throws IOException {
-        SockAddrUnix sa;
-        if (null == local) {
-            // Support bind in anonymous namespace (Linux, OSX >= 10.9, more?)
-            sa = SockAddrUnix.create();
-            sa.setFamily(ProtocolFamily.PF_UNIX);
-            sa.setPath("");
-        } else {
-            sa = local.getStruct();
-        }
-        if (Native.bind(getFD(), sa, sa.length()) < 0) {
-            Errno error = Errno.valueOf(LastError.getLastError(jnr.ffi.Runtime.getSystemRuntime()));
-            throw new IOException(error.toString());
-        }
-        localAddress = getsockname(getFD());
+        localAddress = Common.bind(getFD(), (UnixSocketAddress)local);
         return this;
-    }
+	}
 
     public UnixDatagramChannel connect(UnixSocketAddress remote) {
         stateLock.writeLock().lock();
@@ -140,11 +120,11 @@ public class UnixDatagramChannel extends AbstractNativeDatagramChannel {
         if (!isConnected()) {
             return null;
         }
-        return remoteAddress != null ? remoteAddress : (remoteAddress = getpeername(getFD()));
+        return remoteAddress != null ? remoteAddress : (remoteAddress = Common.getpeername(getFD()));
     }
 
     public final UnixSocketAddress getLocalSocketAddress() {
-        return localAddress != null ? localAddress : (localAddress = getsockname(getFD()));
+        return localAddress != null ? localAddress : (localAddress = Common.getsockname(getFD()));
     }
 
     /**
@@ -183,7 +163,7 @@ public class UnixDatagramChannel extends AbstractNativeDatagramChannel {
             if (isConnected()) {
                 remote = remoteAddress;
             } else {
-                throw new NullPointerException("Destination address cannot be null on unconnected datagram sockets");
+                throw new IllegalArgumentException("Destination address cannot be null on unconnected datagram sockets");
             }
         } else {
             if (!(target instanceof UnixSocketAddress)) {
@@ -199,28 +179,6 @@ public class UnixDatagramChannel extends AbstractNativeDatagramChannel {
         }
 
         return n;
-    }
-
-    static UnixSocketAddress getpeername(int sockfd) {
-        UnixSocketAddress remote = new UnixSocketAddress();
-        IntByReference len = new IntByReference(remote.getStruct().getMaximumLength());
-
-        if (Native.libc().getpeername(sockfd, remote.getStruct(), len) < 0) {
-            throw new Error(Native.getLastErrorString());
-        }
-
-        return remote;
-    }
-
-    static UnixSocketAddress getsockname(int sockfd) {
-        UnixSocketAddress local = new UnixSocketAddress();
-        IntByReference len = new IntByReference(local.getStruct().getMaximumLength());
-
-        if (Native.libc().getsockname(sockfd, local.getStruct(), len) < 0) {
-            throw new Error(Native.getLastErrorString());
-        }
-
-        return local;
     }
 
 	@Override

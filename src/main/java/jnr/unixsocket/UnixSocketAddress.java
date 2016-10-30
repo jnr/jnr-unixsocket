@@ -20,8 +20,15 @@ package jnr.unixsocket;
 
 import jnr.constants.platform.ProtocolFamily;
 
+import jnr.ffi.Platform;
+import jnr.ffi.Platform.OS;
+
 public class UnixSocketAddress extends java.net.SocketAddress {
-    private final SockAddrUnix address;
+
+    private static transient OS currentOS = Platform.getNativePlatform().getOS();
+
+    private static final long serialVersionUID = 4821337010221569096L;
+    private final transient SockAddrUnix address;
 
     UnixSocketAddress() {
         address = SockAddrUnix.create();
@@ -33,11 +40,17 @@ public class UnixSocketAddress extends java.net.SocketAddress {
         address.setFamily(ProtocolFamily.PF_UNIX);
         address.setPath(path.getPath());
     }
-    
+
+    public UnixSocketAddress(final String path) {
+        address = SockAddrUnix.create();
+        address.setFamily(ProtocolFamily.PF_UNIX);
+        address.setPath(path);
+    }
+
     SockAddrUnix getStruct() {
         return address;
     }
-    
+
     int length() {
         return address.length();
     }
@@ -46,18 +59,34 @@ public class UnixSocketAddress extends java.net.SocketAddress {
         return address.getPath();
     }
 
+    private String humanReadablePath() {
+        String ret = path();
+        // Handle abstract namespace like netstat: replace NUL by '@'
+        if (ret.indexOf('\000') == 0) {
+            return ret.replace('\000', '@');
+        }
+        return ret;
+    }
+
     @Override
     public String toString() {
-        return "[family=" + address.getFamily() + " path=" + path() + "]";
+        return "[family=" + address.getFamily() + " path=" + humanReadablePath() + "]";
     }
 
     @Override
     public boolean equals(Object _other) {
-        if (!(_other instanceof UnixSocketAddress)) return false;
+        if (!(_other instanceof UnixSocketAddress)) {
+            return false;
+        }
 
         UnixSocketAddress other = (UnixSocketAddress)_other;
 
         return address.getFamily() == other.address.getFamily() &&
-                path().equals(other.path());
+            path().equals(other.path());
+    }
+
+    @Override
+    public int hashCode() {
+        return address.hashCode();
     }
 }

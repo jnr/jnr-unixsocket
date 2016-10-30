@@ -39,6 +39,7 @@
       <id>felfert</id>
       <name>Fritz Elfert</name>
       <email>fritz-github@fritz-elfert.de</email>
+      <timezone>Europe/Berlin</timezone>
     </developer>
   </developers>
 
@@ -103,8 +104,21 @@
         <artifactId>maven-pmd-plugin</artifactId>
         <version>3.6</version>
         <configuration>
+          <verbose>true</verbose>
           <linkXRef>false</linkXRef>
           <failOnViolation>false</failOnViolation>
+          <rulesets>
+              <!-- The 5 standard rulesets -->
+              <ruleset>/rulesets/java/basic.xml</ruleset>
+              <ruleset>/rulesets/java/empty.xml</ruleset>
+              <ruleset>/rulesets/java/imports.xml</ruleset>
+              <ruleset>/rulesets/java/unnecessary.xml</ruleset>
+              <ruleset>/rulesets/java/unusedcode.xml</ruleset>
+
+              <!-- Additional rulesets, see https://pmd.github.io/pmd-5.5.1/pmd-java/rules/index.html -->
+              <ruleset>/rulesets/java/braces.xml</ruleset>
+              <ruleset>/rulesets/java/finalizers.xml</ruleset>
+          </rulesets>
         </configuration>
         <executions>
           <execution>
@@ -259,3 +273,4 @@
     </extensions>
   </build>
 </project>
+<!-- vim: set sw=2 ts=2 et -->

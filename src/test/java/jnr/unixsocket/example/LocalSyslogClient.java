@@ -22,8 +22,12 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+
 import jnr.unixsocket.UnixSocketAddress;
 import jnr.unixsocket.UnixDatagramChannel;
+
+import jnr.ffi.Platform;
+import jnr.ffi.Platform.OS;
 
 import java.lang.management.ManagementFactory;
 
@@ -103,8 +107,7 @@ public class LocalSyslogClient {
     }
 
     private String getSocketPath() {
-        String uname = System.getProperty("os.name");
-        if (uname.equalsIgnoreCase("Mac OS X")) {
+        if (Platform.getNativePlatform().getOS() == OS.DARWIN) {
             return "/var/run/syslog";
         }
         return "/dev/log";

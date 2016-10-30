@@ -25,7 +25,6 @@ import java.net.InetAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.DatagramSocket;
-import java.nio.channels.Channels;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.UnsupportedAddressTypeException;
 
@@ -47,7 +46,6 @@ public class UnixDatagramSocket extends DatagramSocket {
      * @throws SocketException if the socket could not be created.
      */
 	UnixDatagramSocket(final UnixDatagramChannel channel) throws SocketException {
-        super(new UnixSocketAddress()); // Avoid DatagamSocket's default constructor
         chan = channel;
 	}
 
@@ -57,35 +55,13 @@ public class UnixDatagramSocket extends DatagramSocket {
      * @throws SocketException if the socket could not be created.
      */
 	public UnixDatagramSocket() throws SocketException {
-        super(new UnixSocketAddress()); // Avoid DatagamSocket's default constructor
         chan = null;
-    }
-
-    /**
-     * Constructs a new bound instance.
-     * @param local The address to bind to.
-     * @throws SocketException if the socket could not be created or bound.
-     */
-    public UnixDatagramSocket(final SocketAddress local) throws SocketException {
-        try {
-            chan = UnixDatagramChannel.open();
-            if (null != local) {
-                if (!(local instanceof UnixSocketAddress)) {
-                    throw new UnsupportedAddressTypeException();
-                }
-                bind(local);
-            }
-        } catch (IOException e) {
-            throw (SocketException)new SocketException().initCause(e);
-        }
     }
 
     @Override
     public void bind(final SocketAddress local) throws SocketException {
-        if (null != local) {
-            if (!(local instanceof UnixSocketAddress)) {
-                throw new UnsupportedAddressTypeException();
-            }
+        if (null != local && !(local instanceof UnixSocketAddress)) {
+            throw new UnsupportedAddressTypeException();
         }
         if (null != chan) {
             try {
@@ -157,7 +133,7 @@ public class UnixDatagramSocket extends DatagramSocket {
         if (null == chan) {
             return false;
         }
-        return (null != chan.getLocalSocketAddress());
+        return null != chan.getLocalSocketAddress();
     }
 
     @Override

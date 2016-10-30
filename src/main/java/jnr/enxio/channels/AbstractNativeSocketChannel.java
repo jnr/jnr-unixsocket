@@ -24,139 +24,78 @@ import java.nio.channels.ByteChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 
-import jnr.constants.platform.Errno;
 import jnr.constants.platform.Shutdown;
 
 public abstract class AbstractNativeSocketChannel extends SocketChannel
-		implements ByteChannel, NativeSelectableChannel {
+    implements ByteChannel, NativeSelectableChannel {
 
-	private int fd = -1;
+    private final Common common;
 
-	public AbstractNativeSocketChannel(int fd) {
-		this(NativeSelectorProvider.getInstance(), fd);
-	}
+    public AbstractNativeSocketChannel(int fd) {
+        this(NativeSelectorProvider.getInstance(), fd);
+    }
 
-	AbstractNativeSocketChannel(SelectorProvider provider, int fd) {
-		super(provider);
-		this.fd = fd;
-	}
+    AbstractNativeSocketChannel(SelectorProvider provider, int fd) {
+        super(provider);
+        common = new Common(fd);
+    }
 
-	public void setFD(int fd) {
-		this.fd = fd;
-	}
+    public void setFD(int fd) {
+        common.setFD(fd);
+    }
 
-	@Override
-	protected void implCloseSelectableChannel() throws IOException {
-		Native.close(fd);
-	}
+    public final int getFD() {
+        return common.getFD();
+    }
 
-	@Override
-	protected void implConfigureBlocking(boolean block) throws IOException {
-		Native.setBlocking(fd, block);
-	}
+    @Override
+    protected void implCloseSelectableChannel() throws IOException {
+        Native.close(common.getFD());
+    }
 
-	public final int getFD() {
-		return fd;
-	}
+    @Override
+    protected void implConfigureBlocking(boolean block) throws IOException {
+        Native.setBlocking(common.getFD(), block);
+    }
 
-	public int read(ByteBuffer dst) throws IOException {
+    public int read(ByteBuffer dst) throws IOException {
+        return common.read(dst);
+    }
 
-		ByteBuffer buffer = ByteBuffer.allocate(dst.remaining());
+    @Override
+    public long read(ByteBuffer[] dsts, int offset,
+            int length) throws IOException {
+        return common.read(dsts, offset, length);
+    }
 
-		int n = Native.read(fd, buffer);
+    public int write(ByteBuffer src) throws IOException {
+        return common.write(src);
+    }
 
-		buffer.flip();
+    @Override
+    public long write(ByteBuffer[] srcs, int offset,
+            int length) throws IOException {
+        return common.write(srcs, offset, length);
+    }
 
-		dst.put(buffer);
+    @Override
+    public SocketChannel shutdownInput() throws IOException {
+        int n = Native.shutdown(common.getFD(), SHUT_RD);
+        if (n < 0) {
+            throw new IOException(Native.getLastErrorString());
+        }
+        return this;
+    }
 
-		switch (n) {
-		case 0:
-			return -1;
+    @Override
+    public SocketChannel shutdownOutput() throws IOException {
+        int n = Native.shutdown(common.getFD(), SHUT_WR);
+        if (n < 0) {
+            throw new IOException(Native.getLastErrorString());
+        }
+        return this;
+    }
 
-		case -1:
-			Errno lastError = Native.getLastError();
-			switch (lastError) {
-			case EAGAIN:
-			case EWOULDBLOCK:
-				return 0;
-
-			default:
-				throw new IOException(Native.getLastErrorString());
-			}
-
-		default: {
-
-			return n;
-		}
-		}
-	}
-
-	@Override
-	public long read(ByteBuffer[] dsts, int offset, int length)
-			throws IOException {
-		long total = 0;
-
-		for (int i = 0; i < length; i++) {
-			ByteBuffer dst = dsts[offset + i];
-			long read = read(dst);
-			if (read == -1) {
-				return read;
-			}
-			total += read;
-		}
-
-		return total;
-	}
-
-	public int write(ByteBuffer src) throws IOException {
-
-		ByteBuffer buffer = ByteBuffer.allocate(src.remaining());
-
-		buffer.put(src);
-
-		buffer.position(0);
-
-		int n = Native.write(fd, buffer);
-
-		if (n < 0) {
-			throw new IOException(Native.getLastErrorString());
-		}
-
-		return n;
-	}
-
-	@Override
-	public long write(ByteBuffer[] srcs, int offset, int length)
-			throws IOException {
-
-		long result = 0;
-		int index = 0;
-
-		for (index = offset; index < length; index++) {
-			result += write(srcs[index]);
-		}
-
-		return result;
-	}
-
-	@Override
-	public SocketChannel shutdownInput() throws IOException {
-		int n = Native.shutdown(fd, SHUT_RD);
-		if (n < 0) {
-			throw new IOException(Native.getLastErrorString());
-		}
-		return this;
-	}
-
-	@Override
-	public SocketChannel shutdownOutput() throws IOException {
-		int n = Native.shutdown(fd, SHUT_WR);
-		if (n < 0) {
-			throw new IOException(Native.getLastErrorString());
-		}
-		return this;
-	}
-
-	private static final int SHUT_RD = Shutdown.SHUT_RD.intValue();
-	private static final int SHUT_WR = Shutdown.SHUT_WR.intValue();
+    private static final int SHUT_RD = Shutdown.SHUT_RD.intValue();
+    private static final int SHUT_WR = Shutdown.SHUT_WR.intValue();
 }
