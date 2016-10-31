@@ -94,8 +94,12 @@ abstract class SockAddrUnix extends Struct {
             // by a NUL byte if it is shorter than sizeof(sun_path)
             cachedPath = getPathField().get();
             int slen = len - HEADER_LENGTH;
-            if (slen < getPathField().length() && slen >= 0 && slen < cachedPath.length()) {
-                cachedPath = cachedPath.substring(0, slen);
+            if (slen <= 0) {
+                cachedPath = "";
+            } else {
+                if (slen < getPathField().length() && slen < cachedPath.length()) {
+                    cachedPath = cachedPath.substring(0, slen);
+                }
             }
         }
     }
