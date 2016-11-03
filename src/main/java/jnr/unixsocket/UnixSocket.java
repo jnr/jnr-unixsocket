@@ -28,14 +28,15 @@ import java.net.InetAddress;
 import java.net.SocketAddress;
 import java.nio.channels.Channels;
 import java.nio.channels.SocketChannel;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 class UnixSocket extends java.net.Socket {
 
     private UnixSocketChannel chan;
 
-    volatile private boolean closed = false;
-    volatile private boolean indown = false;
-    volatile private boolean outdown = false;
+    private AtomicBoolean closed = new AtomicBoolean(false);
+    private AtomicBoolean indown = new AtomicBoolean(false);
+    private AtomicBoolean outdown = new AtomicBoolean(false);
 
     private InputStream in;
     private OutputStream out;
@@ -53,7 +54,7 @@ class UnixSocket extends java.net.Socket {
     @Override
     public void close() throws IOException {
         chan.close();
-        closed = true;
+        closed.compareAndSet(false, true);
     }
 
     @Override
@@ -126,7 +127,7 @@ class UnixSocket extends java.net.Socket {
 
     @Override
     public boolean isClosed() {
-        return closed;
+        return closed.get();
     }
 
     @Override
@@ -136,24 +137,24 @@ class UnixSocket extends java.net.Socket {
 
     @Override
     public boolean isInputShutdown() {
-        return indown;
+        return indown.get();
     }
 
     @Override
     public boolean isOutputShutdown() {
-        return outdown;
+        return outdown.get();
     }
 
     @Override
     public void shutdownInput() throws IOException {
         chan.shutdownInput();
-        indown = true;
+        indown.compareAndSet(false, true);
     }
 
     @Override
     public void shutdownOutput() throws IOException {
         chan.shutdownOutput();
-        outdown = true;
+        outdown.compareAndSet(false, true);
     }
 
     /**
