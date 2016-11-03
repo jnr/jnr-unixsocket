@@ -59,7 +59,7 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
     }
 
     public static final UnixSocketChannel open(UnixSocketAddress remote)
-        throws IOException {
+            throws IOException {
         UnixSocketChannel channel = new UnixSocketChannel();
 
         try {
@@ -79,7 +79,7 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
         int[] sockets = { -1, -1 };
         Native.socketpair(ProtocolFamily.PF_UNIX, Sock.SOCK_STREAM, 0, sockets);
         return new UnixSocketChannel[] { new UnixSocketChannel(sockets[0]),
-            new UnixSocketChannel(sockets[1]) };
+                new UnixSocketChannel(sockets[1]) };
     }
 
     /**
@@ -119,15 +119,15 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
     private boolean doConnect(SockAddrUnix remote) throws IOException {
         if (Native.connect(getFD(), remote, remote.length()) != 0) {
             Errno error = Errno.valueOf(LastError.getLastError(jnr.ffi.Runtime
-                        .getSystemRuntime()));
+                    .getSystemRuntime()));
 
             switch (error) {
-                case EAGAIN:
-                case EWOULDBLOCK:
-                    return false;
+            case EAGAIN:
+            case EWOULDBLOCK:
+                return false;
 
-                default:
-                    throw new IOException(error.toString());
+            default:
+                throw new IOException(error.toString());
             }
         }
 
@@ -137,13 +137,13 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
     public boolean connect(UnixSocketAddress remote) throws IOException {
         remoteAddress = remote;
         if (!doConnect(remoteAddress.getStruct())) {
-        	stateLock.writeLock().lock();
+            stateLock.writeLock().lock();
             state = State.CONNECTING;
             stateLock.writeLock().unlock();
             return false;
 
         } else {
-        	stateLock.writeLock().lock();
+            stateLock.writeLock().lock();
             state = State.CONNECTED;
             stateLock.writeLock().unlock();
             return true;
@@ -151,46 +151,46 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
     }
 
     public boolean isConnected() {
-    	stateLock.readLock().lock();
-    	boolean result = state == State.CONNECTED;
-    	stateLock.readLock().unlock();
-    	return result;
+        stateLock.readLock().lock();
+        boolean result = state == State.CONNECTED;
+        stateLock.readLock().unlock();
+        return result;
     }
-    
+
     private boolean isIdle() {
-    	stateLock.readLock().lock();
-    	boolean result = state == State.IDLE;
-    	stateLock.readLock().unlock();
-    	return result;
+        stateLock.readLock().lock();
+        boolean result = state == State.IDLE;
+        stateLock.readLock().unlock();
+        return result;
     }
 
     public boolean isConnectionPending() {
-    	stateLock.readLock().lock();
+        stateLock.readLock().lock();
         boolean isConnectionPending = state == State.CONNECTING;
         stateLock.readLock().unlock();
         return isConnectionPending;
     }
 
     public boolean finishConnect() throws IOException {
-    	stateLock.writeLock().lock();
-    	try {
+        stateLock.writeLock().lock();
+        try {
             switch (state) {
-                case CONNECTED:
-                    return true;
+            case CONNECTED:
+                return true;
 
-                case CONNECTING:
-                    if (!doConnect(remoteAddress.getStruct())) {
-                        return false;
-                    }
-                    state = State.CONNECTED;
-                    return true;
+            case CONNECTING:
+                if (!doConnect(remoteAddress.getStruct())) {
+                    return false;
+                }
+                state = State.CONNECTED;
+                return true;
 
-                default:
-                    throw new IllegalStateException(
-                            "socket is not waiting for connect to complete");
+            default:
+                throw new IllegalStateException(
+                        "socket is not waiting for connect to complete");
             }
         } finally {
-        	stateLock.writeLock().unlock();
+            stateLock.writeLock().unlock();
         }
     }
 
@@ -273,15 +273,15 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
 
     @Override
     public long write(ByteBuffer[] srcs, int offset, int length)
-    throws IOException {
+            throws IOException {
 
-    if (isConnected()) {
-        return super.write(srcs, offset, length);
-    } else if (isIdle()) {
-        return 0;
-    } else {
-        throw new ClosedChannelException();
-    }
+        if (isConnected()) {
+            return super.write(srcs, offset, length);
+        } else if (isIdle()) {
+            return 0;
+        } else {
+            throw new ClosedChannelException();
+        }
     }
 
     @Override
@@ -305,7 +305,6 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
             throw new ClosedChannelException();
         }
     }
-
 
     @Override
     public SocketAddress getRemoteAddress() throws IOException {
@@ -340,19 +339,21 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
     @Override
     public <T> T getOption(SocketOption<T> name) throws IOException {
         if (!supportedOptions().contains(name)) {
-            throw new UnsupportedOperationException("'" + name + "' not supported");
+            throw new UnsupportedOperationException("'" + name
+                    + "' not supported");
         }
         return Common.getSocketOption(getFD(), name);
     }
 
     @Override
     public <T> SocketChannel setOption(SocketOption<T> name, T value)
-        throws IOException {
+            throws IOException {
         if (name == null) {
             throw new IllegalArgumentException("name may not be null");
         }
         if (!supportedOptions().contains(name)) {
-            throw new UnsupportedOperationException("'" + name + "' not supported");
+            throw new UnsupportedOperationException("'" + name
+                    + "' not supported");
         }
         Common.setSocketOption(getFD(), name, value);
         return this;
@@ -363,7 +364,7 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
         if (null != local && !(local instanceof UnixSocketAddress)) {
             throw new UnsupportedAddressTypeException();
         }
-        localAddress = Common.bind(getFD(), (UnixSocketAddress)local);
+        localAddress = Common.bind(getFD(), (UnixSocketAddress) local);
         return this;
     }
 
