@@ -28,6 +28,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.UnsupportedAddressTypeException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A SOCK_DGRAM variant of an AF_UNIX socket.
@@ -38,9 +39,7 @@ import java.nio.channels.UnsupportedAddressTypeException;
 public class UnixDatagramSocket extends DatagramSocket {
 
     private final UnixDatagramChannel chan;
-
-    private boolean closed = false;
-    private Object closeLock = new Object();
+    private final AtomicBoolean closed = new AtomicBoolean(false);
 
     /**
      * Constructs a new instance.
@@ -111,9 +110,7 @@ public class UnixDatagramSocket extends DatagramSocket {
 
     @Override
     public void close() {
-        synchronized(closeLock) {
-            if (isClosed())
-                return;
+        if (closed.compareAndSet(false, true)) {
             if (null != chan) {
                 try {
                     chan.close();
@@ -121,7 +118,6 @@ public class UnixDatagramSocket extends DatagramSocket {
                     // ignore
                 }
             }
-            closed = true;
         }
     }
 
@@ -201,9 +197,7 @@ public class UnixDatagramSocket extends DatagramSocket {
 
     @Override
     public boolean isClosed() {
-        synchronized(closeLock) {
-            return closed;
-        }
+        return closed.get();
     }
 
     @Override
@@ -228,6 +222,60 @@ public class UnixDatagramSocket extends DatagramSocket {
      */
     public final Credentials getCredentials() {
         return chan.getCredentials();
+    }
+
+    @Override
+    public int getReceiveBufferSize() throws SocketException {
+        try {
+            return chan.getOption(UnixSocketOptions.SO_RCVBUF).intValue();
+        } catch (IOException e) {
+            throw (SocketException)new SocketException().initCause(e);
+        }
+    }
+
+    @Override
+    public int getSendBufferSize() throws SocketException {
+        try {
+            return chan.getOption(UnixSocketOptions.SO_SNDBUF).intValue();
+        } catch (IOException e) {
+            throw (SocketException)new SocketException().initCause(e);
+        }
+    }
+
+    @Override
+    public int getSoTimeout() throws SocketException {
+        try {
+            return chan.getOption(UnixSocketOptions.SO_RCVTIMEO).intValue();
+        } catch (IOException e) {
+            throw (SocketException)new SocketException().initCause(e);
+        }
+    }
+
+    @Override
+    public void setReceiveBufferSize(int size) throws SocketException {
+        try {
+            chan.setOption(UnixSocketOptions.SO_RCVBUF, Integer.valueOf(size));
+        } catch (IOException e) {
+            throw (SocketException)new SocketException().initCause(e);
+        }
+    }
+
+    @Override
+    public void setSendBufferSize(int size) throws SocketException {
+        try {
+            chan.setOption(UnixSocketOptions.SO_SNDBUF, Integer.valueOf(size));
+        } catch (IOException e) {
+            throw (SocketException)new SocketException().initCause(e);
+        }
+    }
+
+    @Override
+    public void setSoTimeout(int timeout) throws SocketException {
+        try {
+            chan.setOption(UnixSocketOptions.SO_RCVTIMEO, Integer.valueOf(timeout));
+        } catch (IOException e) {
+            throw (SocketException)new SocketException().initCause(e);
+        }
     }
 
     /**

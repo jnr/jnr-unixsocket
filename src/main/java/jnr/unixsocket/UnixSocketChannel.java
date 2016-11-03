@@ -236,27 +236,6 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
         return Credentials.getCredentials(getFD());
     }
 
-    public boolean getKeepAlive() {
-        int ret = Native.getsockopt(getFD(), SocketLevel.SOL_SOCKET,
-                jnr.constants.platform.SocketOption.SO_KEEPALIVE.intValue());
-        return (ret == 1) ? true : false;
-    }
-
-    public void setKeepAlive(boolean on) {
-        Native.setsockopt(getFD(), SocketLevel.SOL_SOCKET,
-                jnr.constants.platform.SocketOption.SO_KEEPALIVE, on);
-    }
-
-    public int getSoTimeout() {
-        return Native.getsockopt(getFD(), SocketLevel.SOL_SOCKET,
-                jnr.constants.platform.SocketOption.SO_RCVTIMEO.intValue());
-    }
-
-    public void setSoTimeout(int timeout) {
-        Native.setsockopt(getFD(), SocketLevel.SOL_SOCKET,
-                jnr.constants.platform.SocketOption.SO_RCVTIMEO, timeout);
-    }
-
     @Override
     public boolean connect(SocketAddress remote) throws IOException {
         if (remote instanceof UnixSocketAddress) {

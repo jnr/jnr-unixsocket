@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.SocketAddress;
+import java.net.SocketException;
 import java.nio.channels.Channels;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -150,14 +151,14 @@ class UnixSocket extends java.net.Socket {
     public void shutdownInput() throws IOException {
         if (indown.compareAndSet(false, true)) {
             chan.shutdownInput();
-        };        
+        }
     }
 
     @Override
     public void shutdownOutput() throws IOException {
         if (outdown.compareAndSet(false, true)) {
             chan.shutdownOutput();
-        }       
+        }
     }
 
     /**
@@ -175,4 +176,77 @@ class UnixSocket extends java.net.Socket {
     public final Credentials getCredentials() {
         return chan.getCredentials();
     }
+
+    @Override
+    public boolean getKeepAlive() throws SocketException {
+        try {
+            return chan.getOption(UnixSocketOptions.SO_KEEPALIVE).booleanValue();
+        } catch (IOException e) {
+            throw (SocketException)new SocketException().initCause(e);
+        }
+    }
+
+    @Override
+    public int getReceiveBufferSize() throws SocketException {
+        try {
+            return chan.getOption(UnixSocketOptions.SO_RCVBUF).intValue();
+        } catch (IOException e) {
+            throw (SocketException)new SocketException().initCause(e);
+        }
+    }
+
+    @Override
+    public int getSendBufferSize() throws SocketException {
+        try {
+            return chan.getOption(UnixSocketOptions.SO_SNDBUF).intValue();
+        } catch (IOException e) {
+            throw (SocketException)new SocketException().initCause(e);
+        }
+    }
+
+    @Override
+    public int getSoTimeout() throws SocketException {
+        try {
+            return chan.getOption(UnixSocketOptions.SO_RCVTIMEO).intValue();
+        } catch (IOException e) {
+            throw (SocketException)new SocketException().initCause(e);
+        }
+    }
+
+    @Override
+    public void setKeepAlive(boolean on) throws SocketException {
+        try {
+            chan.setOption(UnixSocketOptions.SO_KEEPALIVE, Boolean.valueOf(on));
+        } catch (IOException e) {
+            throw (SocketException)new SocketException().initCause(e);
+        }
+    }
+
+    @Override
+    public void setReceiveBufferSize(int size) throws SocketException {
+        try {
+            chan.setOption(UnixSocketOptions.SO_RCVBUF, Integer.valueOf(size));
+        } catch (IOException e) {
+            throw (SocketException)new SocketException().initCause(e);
+        }
+    }
+
+    @Override
+    public void setSendBufferSize(int size) throws SocketException {
+        try {
+            chan.setOption(UnixSocketOptions.SO_SNDBUF, Integer.valueOf(size));
+        } catch (IOException e) {
+            throw (SocketException)new SocketException().initCause(e);
+        }
+    }
+
+    @Override
+    public void setSoTimeout(int timeout) throws SocketException {
+        try {
+            chan.setOption(UnixSocketOptions.SO_RCVTIMEO, Integer.valueOf(timeout));
+        } catch (IOException e) {
+            throw (SocketException)new SocketException().initCause(e);
+        }
+    }
+
 }
