@@ -20,9 +20,13 @@ package jnr.unixsocket;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.SocketOption;
 import java.nio.file.Files;
+import java.util.Map;
+import java.util.HashMap;
 
 import jnr.constants.platform.ProtocolFamily;
+import jnr.constants.platform.SocketLevel;
 
 import jnr.ffi.Platform;
 import jnr.ffi.Platform.OS;
@@ -88,4 +92,64 @@ final class Common {
         return remote;
     }
 
+    static <T> T getSocketOption(int fd, SocketOption<?> name) throws IOException {
+        jnr.constants.platform.SocketOption optname = rMap.get(name);
+        if (null == optname) {
+            throw new AssertionError("Option not found");
+        }
+        Class<?> type = name.type();
+        if (type == Credentials.class) {
+            return (T) Credentials.getCredentials(fd);
+        }
+        if (type == Integer.class) {
+            return (T) Integer.valueOf(Native.getsockopt(fd, SocketLevel.SOL_SOCKET, optname.intValue()));
+        }
+        return (T) Boolean.valueOf(Native.getboolsockopt(fd, SocketLevel.SOL_SOCKET, optname.intValue()));
+    }
+
+    static void setSocketOption(int fd, SocketOption<?> name,
+            Object value) throws IOException {
+        if (null == value) {
+            throw new IllegalArgumentException("Invalid option value");
+        }
+        Class<?> type = name.type();
+        if (type != Integer.class && type != Boolean.class) {
+            throw new AssertionError("Should not reach here");
+        }
+
+        int optvalue;
+        if (type == Integer.class) {
+            optvalue = ((Integer)value).intValue();
+        } else {
+            optvalue = ((Boolean)value).booleanValue() ? 1 : 0;
+        }
+
+        if (name == UnixSocketOptions.SO_RCVBUF || name == UnixSocketOptions.SO_SNDBUF) {
+            int i = ((Integer)value).intValue();
+            if (i < 0) {
+                throw new IllegalArgumentException("Invalid send/receive buffer size");
+            }
+        }
+
+        jnr.constants.platform.SocketOption optname = wMap.get(name);
+        if (null == optname) {
+            throw new AssertionError("Option not found");
+        }
+
+        if (0 != Native.setsockopt(fd, SocketLevel.SOL_SOCKET, optname, optvalue)) {
+            throw new IOException(Native.getLastErrorString());
+        }
+    }
+
+    private static final Map<SocketOption<?>,jnr.constants.platform.SocketOption> wMap = new HashMap<>();
+    private static final Map<SocketOption<?>,jnr.constants.platform.SocketOption> rMap = new HashMap<>();
+    static {
+        wMap.put(UnixSocketOptions.SO_RCVBUF, jnr.constants.platform.SocketOption.SO_RCVBUF);
+        wMap.put(UnixSocketOptions.SO_SNDBUF, jnr.constants.platform.SocketOption.SO_SNDBUF);
+        wMap.put(UnixSocketOptions.SO_RCVTIMEO, jnr.constants.platform.SocketOption.SO_RCVTIMEO);
+        wMap.put(UnixSocketOptions.SO_SNDTIMEO, jnr.constants.platform.SocketOption.SO_SNDTIMEO);
+        wMap.put(UnixSocketOptions.SO_KEEPALIVE, jnr.constants.platform.SocketOption.SO_KEEPALIVE);
+        rMap.putAll(wMap);
+        rMap.put(UnixSocketOptions.SO_PEERCRED, jnr.constants.platform.SocketOption.SO_PEERCRED);
+    }
 }

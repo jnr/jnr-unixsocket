@@ -87,6 +87,16 @@ public class CredentialsFunctionalTest {
         //don't have an easy way of getting effective GID, but they should be the same
         assertEquals("Client/server running in same process, GID should be the same",
                 clientCreds.getGid(), serverCreds.getGid());
+
+        // Verify, that results from new interface are the same
+        Credentials newCreds = client.getOption(UnixSocketOptions.SO_PEERCRED);
+        assertNotNull(newCreds);
+        assertEquals("Current PID should match new API PID",
+                myPid, newCreds.getPid());
+        assertEquals("old/new API results (UID) should be the same",
+                clientCreds.getUid(), newCreds.getUid());
+        assertEquals("old/new API results (GID) should be the same",
+                clientCreds.getGid(), newCreds.getGid());
     }
 
     public int getCurrentPid() {

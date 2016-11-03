@@ -31,9 +31,12 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.net.SocketOption;
 
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import jnr.constants.platform.ProtocolFamily;
@@ -201,15 +204,15 @@ public class UnixDatagramChannel extends AbstractNativeDatagramChannel {
 
     @Override
     public long write(ByteBuffer[] srcs, int offset, int length)
-    throws IOException {
+        throws IOException {
 
-    if (state == State.CONNECTED) {
-        return super.write(srcs, offset, length);
-    } else if (state == State.IDLE) {
-        return 0;
-    } else {
-        throw new ClosedChannelException();
-    }
+        if (state == State.CONNECTED) {
+            return super.write(srcs, offset, length);
+        } else if (state == State.IDLE) {
+            return 0;
+        } else {
+            throw new ClosedChannelException();
+        }
     }
 
     @Override
@@ -245,20 +248,44 @@ public class UnixDatagramChannel extends AbstractNativeDatagramChannel {
         return localAddress;
     }
 
-    @Override
-    public <T> T getOption(java.net.SocketOption<T> name) throws IOException {
-        throw new UnsupportedOperationException("getOption is not supported");
+    private static class DefaultOptionsHolder {
+        static final Set<SocketOption<?>> defaultOptions = defaultOptions();
+
+        private static Set<SocketOption<?>> defaultOptions() {
+            HashSet<SocketOption<?>> set = new HashSet<SocketOption<?>>(5);
+            set.add(UnixSocketOptions.SO_SNDBUF);
+            set.add(UnixSocketOptions.SO_SNDTIMEO);
+            set.add(UnixSocketOptions.SO_RCVBUF);
+            set.add(UnixSocketOptions.SO_RCVTIMEO);
+            set.add(UnixSocketOptions.SO_PEERCRED);
+            return Collections.unmodifiableSet(set);
+        }
     }
 
     @Override
-    public <T> DatagramChannel setOption(java.net.SocketOption<T> name, T value)
-    throws IOException {
-    throw new UnsupportedOperationException("setOption is not supported");
+    public final Set<SocketOption<?>> supportedOptions() {
+        return DefaultOptionsHolder.defaultOptions;
     }
 
     @Override
-    public Set<java.net.SocketOption<?>> supportedOptions() {
-        throw new UnsupportedOperationException("supportedOptions is not supported");
+    public <T> T getOption(SocketOption<T> name) throws IOException {
+        if (!supportedOptions().contains(name)) {
+            throw new UnsupportedOperationException("'" + name + "' not supported");
+        }
+        return Common.getSocketOption(getFD(), name);
+    }
+
+    @Override
+    public <T> DatagramChannel setOption(SocketOption<T> name, T value)
+        throws IOException {
+        if (name == null) {
+            throw new IllegalArgumentException("name may not be null");
+        }
+        if (!supportedOptions().contains(name)) {
+            throw new UnsupportedOperationException("'" + name + "' not supported");
+        }
+        Common.setSocketOption(getFD(), name, value);
+        return this;
     }
 
     @Override

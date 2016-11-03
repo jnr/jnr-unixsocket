@@ -22,17 +22,19 @@ package jnr.unixsocket;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.net.SocketOption;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.UnsupportedAddressTypeException;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import jnr.constants.platform.Errno;
 import jnr.constants.platform.ProtocolFamily;
 import jnr.constants.platform.Sock;
 import jnr.constants.platform.SocketLevel;
-import jnr.constants.platform.SocketOption;
 import jnr.enxio.channels.AbstractNativeSocketChannel;
 import jnr.ffi.LastError;
 
@@ -207,23 +209,23 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
 
     public boolean getKeepAlive() {
         int ret = Native.getsockopt(getFD(), SocketLevel.SOL_SOCKET,
-                SocketOption.SO_KEEPALIVE.intValue());
+                jnr.constants.platform.SocketOption.SO_KEEPALIVE.intValue());
         return (ret == 1) ? true : false;
     }
 
     public void setKeepAlive(boolean on) {
         Native.setsockopt(getFD(), SocketLevel.SOL_SOCKET,
-                SocketOption.SO_KEEPALIVE, on);
+                jnr.constants.platform.SocketOption.SO_KEEPALIVE, on);
     }
 
     public int getSoTimeout() {
         return Native.getsockopt(getFD(), SocketLevel.SOL_SOCKET,
-                SocketOption.SO_RCVTIMEO.intValue());
+                jnr.constants.platform.SocketOption.SO_RCVTIMEO.intValue());
     }
 
     public void setSoTimeout(int timeout) {
         Native.setsockopt(getFD(), SocketLevel.SOL_SOCKET,
-                SocketOption.SO_RCVTIMEO, timeout);
+                jnr.constants.platform.SocketOption.SO_RCVTIMEO, timeout);
     }
 
     @Override
@@ -286,21 +288,45 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
         return localAddress;
     }
 
-    @Override
-    public <T> T getOption(java.net.SocketOption<T> name) throws IOException {
-        throw new UnsupportedOperationException("getOption is not supported");
+    private static class DefaultOptionsHolder {
+        static final Set<SocketOption<?>> defaultOptions = defaultOptions();
+
+        private static Set<SocketOption<?>> defaultOptions() {
+            HashSet<SocketOption<?>> set = new HashSet<SocketOption<?>>(5);
+            set.add(UnixSocketOptions.SO_SNDBUF);
+            set.add(UnixSocketOptions.SO_SNDTIMEO);
+            set.add(UnixSocketOptions.SO_RCVBUF);
+            set.add(UnixSocketOptions.SO_RCVTIMEO);
+            set.add(UnixSocketOptions.SO_PEERCRED);
+            set.add(UnixSocketOptions.SO_KEEPALIVE);
+            return Collections.unmodifiableSet(set);
+        }
     }
 
     @Override
-    public <T> SocketChannel setOption(java.net.SocketOption<T> name, T value)
-    throws IOException {
-    throw new UnsupportedOperationException("setOption is not supported");
+    public final Set<SocketOption<?>> supportedOptions() {
+        return DefaultOptionsHolder.defaultOptions;
     }
 
     @Override
-    public Set<java.net.SocketOption<?>> supportedOptions() {
-        throw new UnsupportedOperationException(
-                "supportedOptions is not supported");
+    public <T> T getOption(SocketOption<T> name) throws IOException {
+        if (!supportedOptions().contains(name)) {
+            throw new UnsupportedOperationException("'" + name + "' not supported");
+        }
+        return Common.getSocketOption(getFD(), name);
+    }
+
+    @Override
+    public <T> SocketChannel setOption(SocketOption<T> name, T value)
+        throws IOException {
+        if (name == null) {
+            throw new IllegalArgumentException("name may not be null");
+        }
+        if (!supportedOptions().contains(name)) {
+            throw new UnsupportedOperationException("'" + name + "' not supported");
+        }
+        Common.setSocketOption(getFD(), name, value);
+        return this;
     }
 
     @Override

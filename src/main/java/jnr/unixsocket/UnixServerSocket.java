@@ -21,6 +21,8 @@ package jnr.unixsocket;
 import java.io.IOException;
 import java.net.SocketAddress;
 
+import java.nio.channels.UnsupportedAddressTypeException;
+
 public class UnixServerSocket {
     final UnixServerSocketChannel channel;
     final int fd;
@@ -45,18 +47,13 @@ public class UnixServerSocket {
     }
 
     public void bind(SocketAddress endpoint, int backlog) throws IOException {
-        if (!(endpoint instanceof UnixSocketAddress)) {
-            throw new IOException("Invalid address");
+        if (null != endpoint && !(endpoint instanceof UnixSocketAddress)) {
+            throw new UnsupportedAddressTypeException();
         }
-        localAddress = (UnixSocketAddress) endpoint;
-
-        if (Native.bind(fd, localAddress.getStruct(), localAddress.length()) < 0) {
-            throw new IOException(Native.getLastErrorString());
-        }
-
+        localAddress = Common.bind(fd, (UnixSocketAddress)endpoint);
         if (Native.listen(fd, backlog) < 0) {
             throw new IOException(Native.getLastErrorString());
         }
     }
-    
+
 }
