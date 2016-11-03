@@ -53,8 +53,9 @@ class UnixSocket extends java.net.Socket {
 
     @Override
     public void close() throws IOException {
-        chan.close();
-        closed.compareAndSet(false, true);
+        if (closed.compareAndSet(false, true)) {
+            chan.close();
+        };
     }
 
     @Override
@@ -147,14 +148,16 @@ class UnixSocket extends java.net.Socket {
 
     @Override
     public void shutdownInput() throws IOException {
-        chan.shutdownInput();
-        indown.compareAndSet(false, true);
+        if (indown.compareAndSet(false, true)) {
+            chan.shutdownInput();
+        };        
     }
 
     @Override
     public void shutdownOutput() throws IOException {
-        chan.shutdownOutput();
-        outdown.compareAndSet(false, true);
+        if (outdown.compareAndSet(false, true)) {
+            chan.shutdownOutput();
+        }       
     }
 
     /**
