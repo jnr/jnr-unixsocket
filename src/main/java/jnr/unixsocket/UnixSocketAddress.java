@@ -24,6 +24,15 @@ import java.io.ObjectOutputStream;
 
 import jnr.constants.platform.ProtocolFamily;
 
+/**
+ * This class represents an AF_UNIX-style socket address.
+ * On Linux, it supports the platform-specific abstract name space.
+ * <p>
+ * Using an abstract name space is denoted by the socket path starting with
+ * a NUL byte. Sockets in abstract name space have no entry in the file system.
+ * When linux performs autobind, it constructs the resulting path with a
+ * leading NUL, followed by a unique 5-digit hexadecimal number.
+ */
 public class UnixSocketAddress extends java.net.SocketAddress {
 
     private static final long serialVersionUID = 4821337010221569096L;

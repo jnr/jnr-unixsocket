@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.UnsupportedAddressTypeException;
@@ -31,14 +32,15 @@ import java.nio.channels.UnsupportedAddressTypeException;
 /**
  * A SOCK_DGRAM variant of an AF_UNIX socket.
  * This specializaton of DatagramSocket delegates
- * all it's funtionality to the corresponding
- * UnixDatagramSocket.
+ * most of it's funtionality to the corresponding
+ * UnixDatagramChannel.
  */
 public class UnixDatagramSocket extends DatagramSocket {
 
     private final UnixDatagramChannel chan;
 
-    volatile private boolean closed = false;
+    private boolean closed = false;
+    private Object closeLock = new Object();
 
     /**
      * Constructs a new instance.
@@ -58,8 +60,27 @@ public class UnixDatagramSocket extends DatagramSocket {
         chan = null;
     }
 
+    /**
+     * Binds this UnixDatagramSocket to a specific AF_UNIX address.
+     * <p>
+     * If the address is {@code null}, then on Linux, an autobind will be performed,
+     * which will bind this socket in Linux' abstract namespace on a unique path, chosen by
+     * the system. On all other platforms, A temporary path in the regular filesystem will be chosen.
+     *<p>
+     * @param   local The {@link UnixSocketAddress} to bind to.
+     * @throws  SocketException if any error happens during the bind, or if the
+     *          socket is already bound.
+     * @throws UnsupportedAddressTypeException if addr is a SocketAddress subclass
+     *         not supported by this socket.
+     */
     @Override
     public void bind(final SocketAddress local) throws SocketException {
+        if (isClosed()) {
+            throw new SocketException("Socket is closed");
+        }
+        if (isBound()) {
+            throw new SocketException("already bound");
+        }
         if (null != local && !(local instanceof UnixSocketAddress)) {
             throw new UnsupportedAddressTypeException();
         }
@@ -73,15 +94,35 @@ public class UnixDatagramSocket extends DatagramSocket {
     }
 
     @Override
-    public void close() {
+    public void disconnect() {
+        synchronized (this) {
+            if (isClosed()) {
+                return;
+            }
+        }
         if (null != chan) {
             try {
-                chan.close();
+                chan.disconnect();
             } catch (IOException e) {
                 // ignore
             }
         }
-        closed = true;
+    }
+
+    @Override
+    public void close() {
+        synchronized(closeLock) {
+            if (isClosed())
+                return;
+            if (null != chan) {
+                try {
+                    chan.close();
+                } catch (IOException e) {
+                    // ignore
+                }
+            }
+            closed = true;
+        }
     }
 
     @Override
@@ -103,29 +144,51 @@ public class UnixDatagramSocket extends DatagramSocket {
         return chan;
     }
 
+    /**
+     * Returns the address to which this socket is connected (<b>NOT implemented</b>).
+     * Since AF_UNIX sockets can not have an InetAddress, this returns always {@code null}.
+     * Use {@link #getRemoteSocketAddress} instead, which always returns a {@link UnixSocketAddress}.
+     * @return {@code null} always.
+     */
     @Override
     public InetAddress getInetAddress() {
         return null;
     }
 
+    /**
+     * Returns the address of the endpoint this socket is bound to.
+     *
+     * @return a {@code SocketAddress} representing the local endpoint of this
+     *         socket, or {@code null} if it is closed or not bound.
+     *         A non-null return value is always of type {@link UnixSocketAddress}
+     * @see #bind(SocketAddress)
+     */
     @Override
     public SocketAddress getLocalSocketAddress() {
-        UnixSocketAddress address = chan.getLocalSocketAddress();
-        if (address != null) {
-            return address;
-        } else {
+        if (isClosed()) {
             return null;
         }
+        if (null == chan) {
+            return null;
+        }
+        return chan.getLocalSocketAddress();
     }
 
+    /**
+     * Returns the address of the endpoint this socket is connected to, or
+     * {@code null} if it is unconnected.
+     *
+     * @return a {@code SocketAddress} representing the remote
+     *         endpoint of this socket, or {@code null} if it is
+     *         not connected.
+     *         A non-null return value is always of type {@link UnixSocketAddress}
+     */
     @Override
     public SocketAddress getRemoteSocketAddress() {
-        SocketAddress address = chan.getRemoteSocketAddress();
-        if (address != null) {
-            return address;
-        } else {
+        if (!isConnected()) {
             return null;
         }
+        return chan.getRemoteSocketAddress();
     }
 
     @Override
@@ -138,11 +201,16 @@ public class UnixDatagramSocket extends DatagramSocket {
 
     @Override
     public boolean isClosed() {
-        return closed;
+        synchronized(closeLock) {
+            return closed;
+        }
     }
 
     @Override
     public boolean isConnected() {
+        if (null == chan) {
+            return false;
+        }
         return chan.isConnected();
     }
 
@@ -160,5 +228,31 @@ public class UnixDatagramSocket extends DatagramSocket {
      */
     public final Credentials getCredentials() {
         return chan.getCredentials();
+    }
+
+    /**
+     * Sends a datagram packet from this socket (<b>NOT implemented</b>).
+     * Unfortunately, {@link java.net.DatagramPacket} is final and can not deal
+     * with AF_UNIX addresses. Therefore, this functionality was omitted.
+     * @see java.net.DatagramPacket
+     * @see java.net.DatagramSocket#send
+     * @throws UnsupportedOperationException always.
+     */
+    @Override
+    public void send(DatagramPacket p) throws IOException {
+        throw new UnsupportedOperationException("sending DatagramPackets is not supported");
+    }
+
+    /**
+     * Receives a datagram packet from this socket (<b>NOT implemented</b>).
+     * Unfortunately, {@link java.net.DatagramPacket} is final and can not deal
+     * with AF_UNIX addresses. Therefore, this functionality was omitted.
+     * @see java.net.DatagramPacket
+     * @see java.net.DatagramSocket#receive
+     * @throws UnsupportedOperationException always.
+     */
+    @Override
+    public synchronized void receive(DatagramPacket p) throws IOException {
+        throw new UnsupportedOperationException("receiving DatagramPackets is not supported");
     }
 }
