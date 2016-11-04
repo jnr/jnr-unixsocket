@@ -64,8 +64,8 @@ public class UnixDatagramChannel extends AbstractNativeDatagramChannel {
         int[] sockets = { -1, -1 };
         Native.socketpair(ProtocolFamily.PF_UNIX, Sock.SOCK_DGRAM, 0, sockets);
         return new UnixDatagramChannel[] {
-            new UnixDatagramChannel(sockets[0], State.CONNECTED),
-                new UnixDatagramChannel(sockets[1], State.CONNECTED)
+            new UnixDatagramChannel(sockets[0], State.CONNECTED, true),
+                new UnixDatagramChannel(sockets[1], State.CONNECTED, true)
         };
     }
 
@@ -74,13 +74,14 @@ public class UnixDatagramChannel extends AbstractNativeDatagramChannel {
     }
 
     UnixDatagramChannel(int fd) {
-        this(fd, State.IDLE);
+        this(fd, State.IDLE, false);
     }
 
-    UnixDatagramChannel(int fd, State initialState) {
+    UnixDatagramChannel(int fd, State initialState, boolean initialBoundState) {
         super(fd);
         stateLock.writeLock().lock();
         state = initialState;
+        bound.set(initialBoundState);
         stateLock.writeLock().unlock();
     }
 

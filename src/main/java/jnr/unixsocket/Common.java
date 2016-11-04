@@ -112,9 +112,15 @@ final class Common {
         if (null == value) {
             throw new IllegalArgumentException("Invalid option value");
         }
+
+        jnr.constants.platform.SocketOption optname = wMap.get(name);
+        if (null == optname) {
+            throw new AssertionError("Option not found or not writable");
+        }
+
         Class<?> type = name.type();
         if (type != Integer.class && type != Boolean.class) {
-            throw new AssertionError("Should not reach here");
+            throw new AssertionError("Unsupported option type");
         }
 
         int optvalue;
@@ -131,9 +137,11 @@ final class Common {
             }
         }
 
-        jnr.constants.platform.SocketOption optname = wMap.get(name);
-        if (null == optname) {
-            throw new AssertionError("Option not found");
+        if (name == UnixSocketOptions.SO_RCVTIMEO || name == UnixSocketOptions.SO_SNDTIMEO) {
+            int i = ((Integer)value).intValue();
+            if (i < 0) {
+                throw new IllegalArgumentException("Invalid send/receive timeout");
+            }
         }
 
         if (0 != Native.setsockopt(fd, SocketLevel.SOL_SOCKET, optname, optvalue)) {

@@ -123,26 +123,23 @@ public class BasicDatagramFunctionalityTest {
         try {
             ch.bind(null);
             fail("Should have thrown AlreadyBoundException");
-        } catch (AlreadyBoundException ex) {
-        }
-        try {
-            ch.socket().bind(null);
-            fail("Should have thrown SocketException");
-        } catch (SocketException ex) {
-            assertEquals("exception message", ex.getMessage(), "already bound");
+        } catch (AlreadyBoundException abx) {
+            try {
+                ch.socket().bind(null);
+                fail("Should have thrown SocketException");
+            } catch (SocketException sx) {
+                assertEquals("exception message", sx.getMessage(), "already bound");
+            }
         }
     }
 
-    // Ignore for now @Test
-    public void socketBufferTest() throws Exception {
-        UnixDatagramChannel ch = UnixDatagramChannel.open();
-        int rxs = ch.getOption(UnixSocketOptions.SO_RCVBUF);
-        int txs = ch.getOption(UnixSocketOptions.SO_SNDBUF);
-        System.out.println(String.format("rxbuf=%d, txbuf=%d", rxs, txs));
-        ch.setOption(UnixSocketOptions.SO_RCVBUF, rxs - 100);
-        ch.setOption(UnixSocketOptions.SO_SNDBUF, txs - 100);
-        rxs = ch.getOption(UnixSocketOptions.SO_RCVBUF);
-        txs = ch.getOption(UnixSocketOptions.SO_SNDBUF);
-        System.out.println(String.format("rxbuf=%d, txbuf=%d", rxs, txs));
+    @Test
+    public void pairTest() throws Exception {
+        UnixDatagramChannel[] sp = UnixDatagramChannel.pair();
+        for (final UnixDatagramChannel ch : sp) {
+            assertTrue("Channel is connected", ch.isConnected());
+            assertTrue("Channel is bound", ch.isBound());
+            assertFalse("Channel's socket is not closed", ch.socket().isClosed());
+        }
     }
 }
