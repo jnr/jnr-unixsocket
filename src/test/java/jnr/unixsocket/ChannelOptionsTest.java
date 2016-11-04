@@ -46,6 +46,8 @@ public class ChannelOptionsTest {
 
     @Test
     public void readonlyDatagramChannelOptionTest() throws Exception {
+        Assume.assumeTrue(OS.LINUX == Platform.getNativePlatform().getOS());
+
         UnixDatagramChannel[] sp = UnixDatagramChannel.pair();
         UnixDatagramChannel ch = sp[0];
         Credentials c = ch.socket().getCredentials();
@@ -60,6 +62,8 @@ public class ChannelOptionsTest {
 
     @Test
     public void readonlySocketChannelOptionTest() throws Exception {
+        Assume.assumeTrue(OS.LINUX == Platform.getNativePlatform().getOS());
+
         UnixSocketChannel[] sp = UnixSocketChannel.pair();
         UnixSocketChannel ch = sp[0];
         Credentials c = ch.socket().getCredentials();
