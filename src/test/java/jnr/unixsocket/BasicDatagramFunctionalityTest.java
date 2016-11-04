@@ -1,8 +1,6 @@
 /*
  * Copyright (C) 2016 Fritz Elfert
  * 
- * (ported from https://github.com/softprops/unisockets/blob/master/unisockets-core/src/main/scala/Socket.scala)
- *
  * This file is part of the JNR project.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");

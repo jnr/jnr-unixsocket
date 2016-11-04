@@ -1,8 +1,6 @@
 /*
  * Copyright (C) 2016 Fritz Elfert
  * 
- * (ported from https://github.com/softprops/unisockets/blob/master/unisockets-core/src/main/scala/Socket.scala)
- *
  * This file is part of the JNR project.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -131,17 +129,22 @@ public class ChannelOptionsTest {
     }
 
     @Test
-    @Ignore
-    // Linux doubles the values when setting. Check what other platforms do.
+    // Linux doubles the values when setting.
+    // OSX keeps settings consistent but restricts possible values to a multiple of 256
+    // Check what other platforms do.
     public void socketBufferTest() throws Exception {
         UnixDatagramChannel ch = UnixDatagramChannel.open();
         int rxs = ch.getOption(UnixSocketOptions.SO_RCVBUF);
         int txs = ch.getOption(UnixSocketOptions.SO_SNDBUF);
+        assertTrue("receive buffer size >= 256", rxs >= 256);
+        assertTrue("send buffer size >= 256", txs >= 256);
+        /*
         System.out.println(String.format("rxbuf=%d, txbuf=%d", rxs, txs));
         ch.setOption(UnixSocketOptions.SO_RCVBUF, rxs - 100);
         ch.setOption(UnixSocketOptions.SO_SNDBUF, txs - 100);
         rxs = ch.getOption(UnixSocketOptions.SO_RCVBUF);
         txs = ch.getOption(UnixSocketOptions.SO_SNDBUF);
         System.out.println(String.format("rxbuf=%d, txbuf=%d", rxs, txs));
+        */
     }
 }
