@@ -217,11 +217,19 @@ public class UnixDatagramSocket extends DatagramSocket {
      *
      * @throws UnsupportedOperationException if the underlying socket library
      *         doesn't support the SO_PEERCRED option
+     * @throws SocketException if fetching the socket option failed.
      *
-     * @return the credentials of the remote
+     * @return the credentials of the remote; null if not connected
      */
-    public final Credentials getCredentials() {
-        return chan.getCredentials();
+    public final Credentials getCredentials() throws SocketException {
+        if (!chan.isConnected()) {
+            return null;
+        }
+        try {
+            return chan.getOption(UnixSocketOptions.SO_PEERCRED);
+        } catch (IOException e) {
+            throw (SocketException)new SocketException().initCause(e);
+        }
     }
 
     @Override

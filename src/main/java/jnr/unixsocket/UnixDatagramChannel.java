@@ -130,25 +130,6 @@ public class UnixDatagramChannel extends AbstractNativeDatagramChannel {
         return localAddress != null ? localAddress : (localAddress = Common.getsockname(getFD()));
     }
 
-    /**
-     * Retrieves the credentials for this UNIX socket. If this socket channel
-     * is not in a connected state, this method will return null.
-     *
-     * See man unix 7; SCM_CREDENTIALS
-     *
-     * @throws UnsupportedOperationException if the underlying socket library
-     *         doesn't support the SO_PEERCRED option
-     *
-     * @return the credentials of the remote; null if not connected
-     */
-    public final Credentials getCredentials() {
-        if (!isConnected()) {
-            return null;
-        }
-
-        return Credentials.getCredentials(getFD());
-    }
-
     @Override
     public UnixSocketAddress receive(ByteBuffer src) throws IOException {
         UnixSocketAddress remote = new UnixSocketAddress();
@@ -194,7 +175,7 @@ public class UnixDatagramChannel extends AbstractNativeDatagramChannel {
     }
 
     @Override
-    public DatagramSocket socket() {
+    public UnixDatagramSocket socket() {
         try {
             return new UnixDatagramSocket(this);
         } catch (SocketException e) {

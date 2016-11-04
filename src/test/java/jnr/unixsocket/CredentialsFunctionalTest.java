@@ -71,7 +71,7 @@ public class CredentialsFunctionalTest {
         assertNotNull("Client socket must be non-null.", client);
         assertNotNull("Server socket must be non-null.", server);
 
-        Credentials clientCreds = client.getCredentials();
+        Credentials clientCreds = client.socket().getCredentials();
         Credentials serverCreds = server.getCredentials();
 
         int myPid = getCurrentPid();

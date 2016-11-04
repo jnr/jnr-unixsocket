@@ -31,7 +31,7 @@ import java.nio.channels.Channels;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class UnixSocket extends java.net.Socket {
+public class UnixSocket extends java.net.Socket {
 
     private UnixSocketChannel chan;
 
@@ -170,11 +170,19 @@ class UnixSocket extends java.net.Socket {
      *
      * @throws UnsupportedOperationException if the underlying socket library
      *         doesn't support the SO_PEERCRED option
+     * @throws SocketException if fetching the socket option failed.
      *
-     * @return the credentials of the remote
+     * @return the credentials of the remote; null if not connected
      */
-    public final Credentials getCredentials() {
-        return chan.getCredentials();
+    public final Credentials getCredentials() throws SocketException {
+        if (!chan.isConnected()) {
+            return null;
+        }
+        try {
+            return chan.getOption(UnixSocketOptions.SO_PEERCRED);
+        } catch (IOException e) {
+            throw (SocketException)new SocketException().initCause(e);
+        }
     }
 
     @Override

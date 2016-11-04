@@ -216,26 +216,6 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
         }
     }
 
-    /**
-     * Retrieves the credentials for this UNIX socket. If this socket channel is
-     * not in a connected state, this method will return null.
-     *
-     * See man unix 7; SCM_CREDENTIALS
-     *
-     * @throws UnsupportedOperationException
-     *             if the underlying socket library doesn't support the
-     *             SO_PEERCRED option
-     *
-     * @return the credentials of the remote; null if not connected
-     */
-    public final Credentials getCredentials() {
-        if (!isConnected()) {
-            return null;
-        }
-
-        return Credentials.getCredentials(getFD());
-    }
-
     @Override
     public boolean connect(SocketAddress remote) throws IOException {
         if (remote instanceof UnixSocketAddress) {
@@ -246,7 +226,7 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
     }
 
     @Override
-    public Socket socket() {
+    public UnixSocket socket() {
         return new UnixSocket(this);
     }
 
