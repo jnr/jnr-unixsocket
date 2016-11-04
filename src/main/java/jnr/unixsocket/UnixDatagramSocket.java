@@ -79,9 +79,6 @@ public class UnixDatagramSocket extends DatagramSocket {
             if (isBound()) {
                 throw new SocketException("already bound");
             }
-            if (null != local && !(local instanceof UnixSocketAddress)) {
-                throw new UnsupportedAddressTypeException();
-            }
             try {
                 chan.bind(local);
             } catch (IOException e) {

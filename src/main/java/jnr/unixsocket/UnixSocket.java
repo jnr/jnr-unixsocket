@@ -48,14 +48,31 @@ public class UnixSocket extends java.net.Socket {
         out = Channels.newOutputStream(chan);
     }
 
-    public void bind(SocketAddress addr) {
-        throw new UnsupportedOperationException("bind not supported");
+    @Override
+    public void bind(SocketAddress local) throws IOException {
+        if (null != chan) {
+            if (isClosed()) {
+                throw new SocketException("Socket is closed");
+            }
+            if (isBound()) {
+                throw new SocketException("already bound");
+            }
+            try {
+                chan.bind(local);
+            } catch (IOException e) {
+                throw (SocketException)new SocketException().initCause(e);
+            }
+        }
     }
 
     @Override
     public void close() throws IOException {
-        if (closed.compareAndSet(false, true)) {
-            chan.close();
+        if (null != chan && closed.compareAndSet(false, true)) {
+            try {
+                chan.close();
+            } catch (IOException e) {
+                ignore();
+            }
         }
     }
 
@@ -124,7 +141,10 @@ public class UnixSocket extends java.net.Socket {
 
     @Override
     public boolean isBound() {
-        return false;
+        if (null == chan) {
+            return false;
+        }
+        return chan.isBound();
     }
 
     @Override
@@ -256,5 +276,7 @@ public class UnixSocket extends java.net.Socket {
             throw (SocketException)new SocketException().initCause(e);
         }
     }
-
+    
+    private void ignore() {
+    }
 }

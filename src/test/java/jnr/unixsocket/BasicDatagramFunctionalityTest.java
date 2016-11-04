@@ -18,26 +18,25 @@
  */
 package jnr.unixsocket;
 
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
+
 import java.io.File;
 import java.io.IOException;
-import java.net.SocketAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.file.Files;
 import java.nio.channels.AlreadyBoundException;
 import java.nio.channels.DatagramChannel;
 import java.nio.charset.StandardCharsets;
-
-import java.util.Set;
-
-import org.junit.Assume;
-import org.junit.Test;
+import java.nio.file.Files;
 
 import jnr.ffi.Platform;
 import jnr.ffi.Platform.OS;
 
-import static junit.framework.Assert.*;
+import org.junit.Assume;
+import org.junit.Test;
 
 public class BasicDatagramFunctionalityTest {
     private static final String DATA = "foo bar baz. The quick brown fox jumps over the lazy dog. ";

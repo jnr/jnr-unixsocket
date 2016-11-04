@@ -1,25 +1,24 @@
 
 package jnr.unixsocket;
 
-import jnr.enxio.channels.NativeSelectorProvider;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static junit.framework.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
+import java.nio.channels.AlreadyBoundException;
 import java.nio.channels.Channels;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
+import jnr.enxio.channels.NativeSelectorProvider;
 
 import org.junit.Test;
-
-import static junit.framework.Assert.*;
 
 public class BasicFunctionalityTest {
     private static final File SOCKADDR = new File("/tmp/jnr-unixsocket-test" + System.currentTimeMillis() + ".sock");
@@ -29,6 +28,32 @@ public class BasicFunctionalityTest {
 
     private Thread server;
     private volatile Exception serverException;
+    
+    @Test
+    public void doubleBindTest() throws Exception {
+        UnixSocketChannel ch = UnixSocketChannel.open().bind(null);
+        try {
+            ch.bind(null);
+            fail("Should have thrown AlreadyBoundException");
+        } catch (AlreadyBoundException abx) {
+            try {
+                ch.socket().bind(null);
+                fail("Should have thrown SocketException");
+            } catch (SocketException sx) {
+                assertEquals("exception message", sx.getMessage(), "already bound");
+            }
+        }
+    }
+    
+    @Test
+    public void pairTest() throws Exception {
+        UnixSocketChannel[] sp = UnixSocketChannel.pair();
+        for (final UnixSocketChannel ch : sp) {
+            assertTrue("Channel is connected", ch.isConnected());
+            assertTrue("Channel is bound", ch.isBound());
+            assertFalse("Channel's socket is not closed", ch.socket().isClosed());
+        }
+    }
 
     @Test
     public void basicOperation() throws Exception {

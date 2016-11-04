@@ -23,12 +23,14 @@ import java.io.IOException;
 import java.net.SocketAddress;
 import java.net.SocketOption;
 import java.nio.ByteBuffer;
+import java.nio.channels.AlreadyBoundException;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.UnsupportedAddressTypeException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -44,13 +46,17 @@ import jnr.ffi.LastError;
  */
 public class UnixSocketChannel extends AbstractNativeSocketChannel {
     enum State {
-        UNINITIALIZED, CONNECTED, IDLE, CONNECTING,
+        UNINITIALIZED,
+        CONNECTED,
+        IDLE,
+        CONNECTING,
     }
 
-    private volatile State state;
+    private State state;
     private UnixSocketAddress remoteAddress = null;
     private UnixSocketAddress localAddress = null;
     private final ReadWriteLock stateLock = new ReentrantReadWriteLock();
+    private final AtomicBoolean bound = new AtomicBoolean(false);
 
     public static final UnixSocketChannel open() throws IOException {
         return new UnixSocketChannel();
@@ -76,8 +82,9 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
     public static final UnixSocketChannel[] pair() throws IOException {
         int[] sockets = { -1, -1 };
         Native.socketpair(ProtocolFamily.PF_UNIX, Sock.SOCK_STREAM, 0, sockets);
-        return new UnixSocketChannel[] { new UnixSocketChannel(sockets[0]),
-                new UnixSocketChannel(sockets[1]) };
+        return new UnixSocketChannel[] { 
+                new UnixSocketChannel(sockets[0], State.CONNECTED, true),
+                new UnixSocketChannel(sockets[1], State.CONNECTED, true) };
     }
 
     /**
@@ -92,26 +99,20 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
         return new UnixSocketChannel(fd);
     }
 
-    private UnixSocketChannel() throws IOException {
-        super(Native.socket(ProtocolFamily.PF_UNIX, Sock.SOCK_STREAM, 0));
-        stateLock.writeLock().lock();
-        state = State.IDLE;
-        stateLock.writeLock().unlock();
+    UnixSocketChannel() throws IOException {
+        this(Native.socket(ProtocolFamily.PF_UNIX, Sock.SOCK_STREAM, 0));
     }
-
+    
     UnixSocketChannel(int fd) {
-        super(fd);
-        stateLock.writeLock().lock();
-        state = State.CONNECTED;
-        stateLock.writeLock().unlock();
+        this(fd, State.CONNECTED, false);
     }
 
-    UnixSocketChannel(int fd, UnixSocketAddress remote) {
+    UnixSocketChannel(int fd, State initialState, boolean initialBoundState) {
         super(fd);
         stateLock.writeLock().lock();
-        state = State.CONNECTED;
+        state = initialState;
+        bound.set(initialBoundState);
         stateLock.writeLock().unlock();
-        remoteAddress = remote;
     }
 
     private boolean doConnect(SockAddrUnix remote) throws IOException {
@@ -146,6 +147,10 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
             stateLock.writeLock().unlock();
             return true;
         }
+    }
+    
+    boolean isBound() {
+        return bound.get();
     }
 
     public boolean isConnected() {
@@ -317,11 +322,16 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
     }
 
     @Override
-    public SocketChannel bind(SocketAddress local) throws IOException {
+    public synchronized UnixSocketChannel bind(SocketAddress local) throws IOException {
         if (null != local && !(local instanceof UnixSocketAddress)) {
             throw new UnsupportedAddressTypeException();
         }
-        localAddress = Common.bind(getFD(), (UnixSocketAddress) local);
+        if (bound.get()) {
+            throw new AlreadyBoundException();
+        } else {
+            localAddress = Common.bind(getFD(), (UnixSocketAddress)local);
+            bound.set(true);
+        }
         return this;
     }
 
