@@ -20,7 +20,6 @@
 package jnr.unixsocket;
 
 import java.io.IOException;
-import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketOption;
 import java.nio.ByteBuffer;
@@ -36,7 +35,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import jnr.constants.platform.Errno;
 import jnr.constants.platform.ProtocolFamily;
 import jnr.constants.platform.Sock;
-import jnr.constants.platform.SocketLevel;
 import jnr.enxio.channels.AbstractNativeSocketChannel;
 import jnr.ffi.LastError;
 

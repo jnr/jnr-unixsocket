@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
@@ -37,7 +38,7 @@ public class ForFDTest {
 
                     try {
                         channel = server.accept();
-                        channel.write(ByteBuffer.wrap(FOOBAR.getBytes()));
+                        channel.write(ByteBuffer.wrap(FOOBAR.getBytes(StandardCharsets.UTF_8)));
                     } catch (Exception e) {
                         serverException = e;
                     } finally {

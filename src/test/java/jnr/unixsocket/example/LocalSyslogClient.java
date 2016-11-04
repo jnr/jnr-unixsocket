@@ -113,7 +113,7 @@ public class LocalSyslogClient {
         return "/dev/log";
     }
 
-    public int getPID() {
+    private int getPid() {
         String[] nameParts = ManagementFactory.getRuntimeMXBean().getName().split("@", 2);
         if (2 == nameParts.length) {
             return Integer.parseInt(nameParts[0]);
@@ -129,7 +129,7 @@ public class LocalSyslogClient {
         UnixSocketAddress address = new UnixSocketAddress(path);
         UnixDatagramChannel channel = UnixDatagramChannel.open();
         int pri = makePri(Priority.LOG_WARNING, Facility.LOG_DAEMON);
-        int pid = getPID();
+        int pid = getPid();
         String tag = "whatever";
         if (args.length > 0) {
             formatLine(pri, tag, pid, args);

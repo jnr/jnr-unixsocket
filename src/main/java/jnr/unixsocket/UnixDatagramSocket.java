@@ -91,30 +91,26 @@ public class UnixDatagramSocket extends DatagramSocket {
     }
 
     @Override
-    public void disconnect() {
-        synchronized (this) {
-            if (isClosed()) {
-                return;
-            }
+    public synchronized void disconnect() {
+        if (isClosed()) {
+            return;
         }
         if (null != chan) {
             try {
                 chan.disconnect();
             } catch (IOException e) {
-                // ignore
+                ignore();
             }
         }
     }
 
     @Override
-    public void close() {
-        if (closed.compareAndSet(false, true)) {
-            if (null != chan) {
-                try {
-                    chan.close();
-                } catch (IOException e) {
-                    // ignore
-                }
+    public synchronized void close() {
+        if (closed.compareAndSet(false, true) && null != chan) {
+            try {
+                chan.close();
+            } catch (IOException e) {
+                ignore();
             }
         }
     }
@@ -308,5 +304,8 @@ public class UnixDatagramSocket extends DatagramSocket {
     @Override
     public synchronized void receive(DatagramPacket p) throws IOException {
         throw new UnsupportedOperationException("receiving DatagramPackets is not supported");
+    }
+
+    private void ignore() {
     }
 }

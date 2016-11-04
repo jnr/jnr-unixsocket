@@ -148,7 +148,7 @@ class Native {
     public static int setsockopt(int s, SocketLevel level, SocketOption optname, int optval) {
         if (optname == SocketOption.SO_RCVTIMEO || optname == SocketOption.SO_SNDTIMEO) {
             DefaultNativeTimeval t = new DefaultNativeTimeval(Runtime.getSystemRuntime());
-            t.setTime(new long [] {optval / 1000, (optval % 1000) * 1000});
+            t.setTime(new long [] {optval / 1000, ((long)optval % 1000) * 1000});
             return libsocket().setsockopt(s, level.intValue(), optname.intValue(), t, DefaultNativeTimeval.size(t));
         } else {
             ByteBuffer buf = ByteBuffer.allocate(4);

@@ -102,7 +102,7 @@ public class CredentialsFunctionalTest {
     public int getCurrentPid() {
         String[] nameParts = ManagementFactory.getRuntimeMXBean().getName().split("@", 2);
         assertEquals("Cannot determine PID", 2, nameParts.length);
-        return Integer.valueOf(nameParts[0]);
+        return Integer.parseInt(nameParts[0]);
     }
 
     /*
@@ -124,6 +124,6 @@ public class CredentialsFunctionalTest {
             fr.close();
         }
 
-        return Integer.valueOf(uidText.toString());
+        return Integer.parseInt(uidText.toString());
     }
 }

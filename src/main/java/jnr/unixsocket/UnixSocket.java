@@ -56,7 +56,7 @@ public class UnixSocket extends java.net.Socket {
     public void close() throws IOException {
         if (closed.compareAndSet(false, true)) {
             chan.close();
-        };
+        }
     }
 
     @Override
