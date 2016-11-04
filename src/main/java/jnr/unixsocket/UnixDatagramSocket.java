@@ -72,16 +72,16 @@ public class UnixDatagramSocket extends DatagramSocket {
      */
     @Override
     public void bind(final SocketAddress local) throws SocketException {
-        if (isClosed()) {
-            throw new SocketException("Socket is closed");
-        }
-        if (isBound()) {
-            throw new SocketException("already bound");
-        }
-        if (null != local && !(local instanceof UnixSocketAddress)) {
-            throw new UnsupportedAddressTypeException();
-        }
         if (null != chan) {
+            if (isClosed()) {
+                throw new SocketException("Socket is closed");
+            }
+            if (isBound()) {
+                throw new SocketException("already bound");
+            }
+            if (null != local && !(local instanceof UnixSocketAddress)) {
+                throw new UnsupportedAddressTypeException();
+            }
             try {
                 chan.bind(local);
             } catch (IOException e) {
@@ -106,7 +106,7 @@ public class UnixDatagramSocket extends DatagramSocket {
 
     @Override
     public synchronized void close() {
-        if (closed.compareAndSet(false, true) && null != chan) {
+        if (null != chan && closed.compareAndSet(false, true)) {
             try {
                 chan.close();
             } catch (IOException e) {
@@ -186,11 +186,14 @@ public class UnixDatagramSocket extends DatagramSocket {
         if (null == chan) {
             return false;
         }
-        return null != chan.getLocalSocketAddress();
+        return chan.isBound();
     }
 
     @Override
     public boolean isClosed() {
+        if (null == chan) {
+            return false;
+        }
         return closed.get();
     }
 

@@ -20,20 +20,17 @@
  */
 package jnr.unixsocket;
 
-import jnr.enxio.channels.NativeSelectorProvider;
-
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.SocketAddress;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.file.Files;
-import java.nio.channels.Channels;
+import java.nio.channels.AlreadyBoundException;
 import java.nio.channels.DatagramChannel;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
 import java.nio.charset.StandardCharsets;
+
 import java.util.Set;
 
 import org.junit.Assume;
@@ -120,4 +117,32 @@ public class BasicDatagramFunctionalityTest {
         basicOperation(1000L * DATA.length());
     }
 
+    @Test
+    public void doubleBindTest() throws Exception {
+        UnixDatagramChannel ch = UnixDatagramChannel.open().bind(null);
+        try {
+            ch.bind(null);
+            fail("Should have thrown AlreadyBoundException");
+        } catch (AlreadyBoundException ex) {
+        }
+        try {
+            ch.socket().bind(null);
+            fail("Should have thrown SocketException");
+        } catch (SocketException ex) {
+            assertEquals("exception message", ex.getMessage(), "already bound");
+        }
+    }
+
+    @Test
+    public void socketBufferTest() throws Exception {
+        UnixDatagramChannel ch = UnixDatagramChannel.open();
+        int rxs = ch.getOption(UnixSocketOptions.SO_RCVBUF);
+        int txs = ch.getOption(UnixSocketOptions.SO_SNDBUF);
+        System.out.println(String.format("rxbuf=%d, txbuf=%d", rxs, txs));
+        ch.setOption(UnixSocketOptions.SO_RCVBUF, rxs - 100);
+        ch.setOption(UnixSocketOptions.SO_SNDBUF, txs - 100);
+        rxs = ch.getOption(UnixSocketOptions.SO_RCVBUF);
+        txs = ch.getOption(UnixSocketOptions.SO_SNDBUF);
+        System.out.println(String.format("rxbuf=%d, txbuf=%d", rxs, txs));
+    }
 }

@@ -25,6 +25,7 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.MembershipKey;
 import java.nio.channels.UnsupportedAddressTypeException;
+import java.nio.channels.AlreadyBoundException;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -34,6 +35,7 @@ import java.net.SocketOption;
 
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -52,6 +54,7 @@ public class UnixDatagramChannel extends AbstractNativeDatagramChannel {
     private UnixSocketAddress remoteAddress = null;
     private UnixSocketAddress localAddress = null;
     private final ReadWriteLock stateLock = new ReentrantReadWriteLock();
+    private final AtomicBoolean bound = new AtomicBoolean(false);
 
     public static final UnixDatagramChannel open() throws IOException {
         return new UnixDatagramChannel();
@@ -87,11 +90,16 @@ public class UnixDatagramChannel extends AbstractNativeDatagramChannel {
     }
 
     @Override
-    public UnixDatagramChannel bind(SocketAddress local) throws IOException {
+    public synchronized UnixDatagramChannel bind(SocketAddress local) throws IOException {
         if (null != local && !(local instanceof UnixSocketAddress)) {
             throw new UnsupportedAddressTypeException();
         }
-        localAddress = Common.bind(getFD(), (UnixSocketAddress)local);
+        if (bound.get()) {
+            throw new AlreadyBoundException();
+        } else {
+            localAddress = Common.bind(getFD(), (UnixSocketAddress)local);
+            bound.set(true);
+        }
         return this;
     }
 
@@ -109,6 +117,10 @@ public class UnixDatagramChannel extends AbstractNativeDatagramChannel {
         state = State.IDLE;
         stateLock.writeLock().unlock();
         return this;
+    }
+
+    boolean isBound() {
+        return bound.get();
     }
 
     public boolean isConnected() {
