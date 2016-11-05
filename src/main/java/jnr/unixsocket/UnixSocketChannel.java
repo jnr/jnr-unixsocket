@@ -23,14 +23,12 @@ import java.io.IOException;
 import java.net.SocketAddress;
 import java.net.SocketOption;
 import java.nio.ByteBuffer;
-import java.nio.channels.AlreadyBoundException;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.UnsupportedAddressTypeException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -56,7 +54,7 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
     private UnixSocketAddress remoteAddress = null;
     private UnixSocketAddress localAddress = null;
     private final ReadWriteLock stateLock = new ReentrantReadWriteLock();
-    private final AtomicBoolean bound = new AtomicBoolean(false);
+    private final BindHandler bindHandler;
 
     public static final UnixSocketChannel open() throws IOException {
         return new UnixSocketChannel();
@@ -111,7 +109,7 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
         super(fd);
         stateLock.writeLock().lock();
         state = initialState;
-        bound.set(initialBoundState);
+        bindHandler = new BindHandler(initialBoundState);
         stateLock.writeLock().unlock();
     }
 
@@ -150,7 +148,7 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
     }
     
     boolean isBound() {
-        return bound.get();
+        return bindHandler.isBound();
     }
 
     public boolean isConnected() {
@@ -323,15 +321,7 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
 
     @Override
     public synchronized UnixSocketChannel bind(SocketAddress local) throws IOException {
-        if (null != local && !(local instanceof UnixSocketAddress)) {
-            throw new UnsupportedAddressTypeException();
-        }
-        if (bound.get()) {
-            throw new AlreadyBoundException();
-        } else {
-            localAddress = Common.bind(getFD(), (UnixSocketAddress)local);
-            bound.set(true);
-        }
+        localAddress = bindHandler.bind(getFD(), local);
         return this;
     }
 
