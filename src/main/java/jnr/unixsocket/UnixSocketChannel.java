@@ -32,8 +32,6 @@ import java.nio.channels.SelectionKey;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static jnr.unixsocket.SockAddrUnix.HEADER_LENGTH;
-
 /**
  * A {@link java.nio.channels.Channel} implementation that uses a native unix socket
  */
@@ -154,14 +152,14 @@ public class UnixSocketChannel extends NativeSocketChannel {
     public boolean isConnected() {
         stateLock.readLock().lock();
         boolean isConnected = state == State.CONNECTED;
-        stateLock.readLock().lock();
+        stateLock.readLock().unlock();
         return isConnected;
     }
 
     public boolean isConnectionPending() {
         stateLock.readLock().lock();
         boolean isConnectionPending = state == State.CONNECTING;
-        stateLock.readLock().lock();
+        stateLock.readLock().unlock();
         return isConnectionPending;
     }
 

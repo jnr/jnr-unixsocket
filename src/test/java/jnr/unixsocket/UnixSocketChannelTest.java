@@ -16,5 +16,12 @@ public class UnixSocketChannelTest {
         // getsockname check
         assertEquals(sp[0].getLocalSocketAddress().path(), "");
         assertEquals(sp[1].getLocalSocketAddress().path(), "");
+
+        assertFalse(sp[0].isConnectionPending());
+        assertFalse(sp[1].isConnectionPending());
+
+        // triggers an infinite wait when the read lock was not released
+        assertTrue(sp[0].finishConnect());
+        assertTrue(sp[1].finishConnect());
     }
 }
