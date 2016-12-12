@@ -30,15 +30,15 @@ final class Ucred extends Struct {
         super(jnr.ffi.Runtime.getSystemRuntime());
     }
 
-    final pid_t getPidField() {
+    pid_t getPidField() {
         return pid;
     }
 
-    final uid_t getUidField() {
+    uid_t getUidField() {
         return uid;
     }
 
-    final gid_t getGidField() {
+    gid_t getGidField() {
         return gid;
     }
 }

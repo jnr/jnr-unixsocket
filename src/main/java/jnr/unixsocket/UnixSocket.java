@@ -1,5 +1,8 @@
 /*
  * Copyright (C) 2009 Wayne Meissner
+ * Copyright (C) 2016 Marcus Linke
+ * 
+ * (ported from https://github.com/softprops/unisockets/blob/master/unisockets-core/src/main/scala/Socket.scala)
  *
  * This file is part of the JNR project.
  *
@@ -14,42 +17,168 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ * 
  */
-
 package jnr.unixsocket;
 
-import jnr.constants.platform.SocketLevel;
-import jnr.constants.platform.SocketOption;
-import jnr.enxio.channels.NativeSocketChannel;
-import jnr.ffi.byref.IntByReference;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetAddress;
+import java.net.SocketAddress;
+import java.net.SocketException;
+import java.nio.channels.Channels;
+import java.nio.channels.SocketChannel;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.channels.Channel;
+public class UnixSocket extends java.net.Socket {
 
-public class UnixSocket {
-    private final NativeSocketChannel channel;
+    private UnixSocketChannel chan;
 
-    UnixSocket(NativeSocketChannel channel) {
-        this.channel = channel;
+    private AtomicBoolean closed = new AtomicBoolean(false);
+    private AtomicBoolean indown = new AtomicBoolean(false);
+    private AtomicBoolean outdown = new AtomicBoolean(false);
+
+    private InputStream in;
+    private OutputStream out;
+
+    public UnixSocket(UnixSocketChannel chan) {
+        this.chan = chan;
+        in = Channels.newInputStream(chan);
+        out = Channels.newOutputStream(chan);
     }
 
-    public final Channel getChannel() {
-        return channel;
+    @Override
+    public void bind(SocketAddress local) throws IOException {
+        if (null != chan) {
+            if (isClosed()) {
+                throw new SocketException("Socket is closed");
+            }
+            if (isBound()) {
+                throw new SocketException("already bound");
+            }
+            try {
+                chan.bind(local);
+            } catch (IOException e) {
+                throw (SocketException)new SocketException().initCause(e);
+            }
+        }
     }
 
-    public final void setKeepAlive(boolean on) {
-        Native.setsockopt(channel.getFD(), SocketLevel.SOL_SOCKET, SocketOption.SO_KEEPALIVE, on);
+    @Override
+    public void close() throws IOException {
+        if (null != chan && closed.compareAndSet(false, true)) {
+            try {
+                chan.close();
+            } catch (IOException e) {
+                ignore();
+            }
+        }
     }
 
-    public final boolean getKeepAlive() {
-        ByteBuffer buf = ByteBuffer.allocate(4);
-        buf.order(ByteOrder.BIG_ENDIAN);
-        IntByReference ref = new IntByReference(4);
+    @Override
+    public void connect(SocketAddress addr) throws IOException {
+        connect(addr, 0);
+    }
 
-        Native.libsocket().getsockopt(channel.getFD(), SocketLevel.SOL_SOCKET.intValue(), SocketOption.SO_KEEPALIVE.intValue(), buf, ref);
+    public void connect(SocketAddress addr, Integer timeout) throws IOException {
+        if (addr instanceof UnixSocketAddress) {
+            chan.connect((UnixSocketAddress) addr);
+        } else {
+            throw new IllegalArgumentException("address of type "
+                    + addr.getClass() + " are not supported. Use "
+                    + UnixSocketAddress.class + " instead");
+        }
+    }
 
-        return buf.getInt(0) != 0;
+    @Override
+    public SocketChannel getChannel() {
+        return chan;
+    }
+
+    @Override
+    public InetAddress getInetAddress() {
+        return null;
+    }
+
+    public InputStream getInputStream() throws IOException {
+        if (chan.isConnected()) {
+            return in;
+        } else {
+            throw new IOException("not connected");
+        }
+    }
+
+    @Override
+    public SocketAddress getLocalSocketAddress() {
+        UnixSocketAddress address = chan.getLocalSocketAddress();
+        if (address != null) {
+            return address;
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public OutputStream getOutputStream() throws IOException {
+        if (chan.isConnected()) {
+            return out;
+        } else {
+            throw new IOException("not connected");
+        }
+    }
+
+    @Override
+    public SocketAddress getRemoteSocketAddress() {
+        SocketAddress address = chan.getRemoteSocketAddress();
+
+        if (address != null) {
+            return address;
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public boolean isBound() {
+        if (null == chan) {
+            return false;
+        }
+        return chan.isBound();
+    }
+
+    @Override
+    public boolean isClosed() {
+        return closed.get();
+    }
+
+    @Override
+    public boolean isConnected() {
+        return chan.isConnected();
+    }
+
+    @Override
+    public boolean isInputShutdown() {
+        return indown.get();
+    }
+
+    @Override
+    public boolean isOutputShutdown() {
+        return outdown.get();
+    }
+
+    @Override
+    public void shutdownInput() throws IOException {
+        if (indown.compareAndSet(false, true)) {
+            chan.shutdownInput();
+        }
+    }
+
+    @Override
+    public void shutdownOutput() throws IOException {
+        if (outdown.compareAndSet(false, true)) {
+            chan.shutdownOutput();
+        }
     }
 
     /**
@@ -61,10 +190,93 @@ public class UnixSocket {
      *
      * @throws UnsupportedOperationException if the underlying socket library
      *         doesn't support the SO_PEERCRED option
+     * @throws SocketException if fetching the socket option failed.
      *
-     * @return the credentials of the remote
+     * @return the credentials of the remote; null if not connected
      */
-    public final Credentials getCredentials() {
-        return Credentials.getCredentials(channel.getFD());
+    public final Credentials getCredentials() throws SocketException {
+        if (!chan.isConnected()) {
+            return null;
+        }
+        try {
+            return chan.getOption(UnixSocketOptions.SO_PEERCRED);
+        } catch (IOException e) {
+            throw (SocketException)new SocketException().initCause(e);
+        }
+    }
+
+    @Override
+    public boolean getKeepAlive() throws SocketException {
+        try {
+            return chan.getOption(UnixSocketOptions.SO_KEEPALIVE).booleanValue();
+        } catch (IOException e) {
+            throw (SocketException)new SocketException().initCause(e);
+        }
+    }
+
+    @Override
+    public int getReceiveBufferSize() throws SocketException {
+        try {
+            return chan.getOption(UnixSocketOptions.SO_RCVBUF).intValue();
+        } catch (IOException e) {
+            throw (SocketException)new SocketException().initCause(e);
+        }
+    }
+
+    @Override
+    public int getSendBufferSize() throws SocketException {
+        try {
+            return chan.getOption(UnixSocketOptions.SO_SNDBUF).intValue();
+        } catch (IOException e) {
+            throw (SocketException)new SocketException().initCause(e);
+        }
+    }
+
+    @Override
+    public int getSoTimeout() throws SocketException {
+        try {
+            return chan.getOption(UnixSocketOptions.SO_RCVTIMEO).intValue();
+        } catch (IOException e) {
+            throw (SocketException)new SocketException().initCause(e);
+        }
+    }
+
+    @Override
+    public void setKeepAlive(boolean on) throws SocketException {
+        try {
+            chan.setOption(UnixSocketOptions.SO_KEEPALIVE, Boolean.valueOf(on));
+        } catch (IOException e) {
+            throw (SocketException)new SocketException().initCause(e);
+        }
+    }
+
+    @Override
+    public void setReceiveBufferSize(int size) throws SocketException {
+        try {
+            chan.setOption(UnixSocketOptions.SO_RCVBUF, Integer.valueOf(size));
+        } catch (IOException e) {
+            throw (SocketException)new SocketException().initCause(e);
+        }
+    }
+
+    @Override
+    public void setSendBufferSize(int size) throws SocketException {
+        try {
+            chan.setOption(UnixSocketOptions.SO_SNDBUF, Integer.valueOf(size));
+        } catch (IOException e) {
+            throw (SocketException)new SocketException().initCause(e);
+        }
+    }
+
+    @Override
+    public void setSoTimeout(int timeout) throws SocketException {
+        try {
+            chan.setOption(UnixSocketOptions.SO_RCVTIMEO, Integer.valueOf(timeout));
+        } catch (IOException e) {
+            throw (SocketException)new SocketException().initCause(e);
+        }
+    }
+    
+    private void ignore() {
     }
 }

@@ -46,3 +46,4 @@ target/
 \.conflict\~$
 
 .idea
+/.checkstyle

@@ -71,7 +71,7 @@ public class CredentialsFunctionalTest {
         assertNotNull("Client socket must be non-null.", client);
         assertNotNull("Server socket must be non-null.", server);
 
-        Credentials clientCreds = client.getCredentials();
+        Credentials clientCreds = client.socket().getCredentials();
         Credentials serverCreds = server.getCredentials();
 
         int myPid = getCurrentPid();
@@ -87,12 +87,22 @@ public class CredentialsFunctionalTest {
         //don't have an easy way of getting effective GID, but they should be the same
         assertEquals("Client/server running in same process, GID should be the same",
                 clientCreds.getGid(), serverCreds.getGid());
+
+        // Verify, that results from new interface are the same
+        Credentials newCreds = client.getOption(UnixSocketOptions.SO_PEERCRED);
+        assertNotNull(newCreds);
+        assertEquals("Current PID should match new API PID",
+                myPid, newCreds.getPid());
+        assertEquals("old/new API results (UID) should be the same",
+                clientCreds.getUid(), newCreds.getUid());
+        assertEquals("old/new API results (GID) should be the same",
+                clientCreds.getGid(), newCreds.getGid());
     }
 
     public int getCurrentPid() {
         String[] nameParts = ManagementFactory.getRuntimeMXBean().getName().split("@", 2);
         assertEquals("Cannot determine PID", 2, nameParts.length);
-        return Integer.valueOf(nameParts[0]);
+        return Integer.parseInt(nameParts[0]);
     }
 
     /*
@@ -114,6 +124,6 @@ public class CredentialsFunctionalTest {
             fr.close();
         }
 
-        return Integer.valueOf(uidText.toString());
+        return Integer.parseInt(uidText.toString());
     }
 }

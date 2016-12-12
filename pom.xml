@@ -35,6 +35,12 @@
       <name>Wayne Meissner</name>
       <email>wmeissner@gmail.com</email>
     </developer>
+    <developer>
+      <id>felfert</id>
+      <name>Fritz Elfert</name>
+      <email>fritz-github@fritz-elfert.de</email>
+      <timezone>Europe/Berlin</timezone>
+    </developer>
   </developers>
 
   <dependencies>
@@ -71,13 +77,99 @@
   </dependencies>
   <build>
     <plugins>
+
+      <!-- run checkstyle check -->
+      <plugin>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>2.17</version>
+        <executions>
+          <execution>
+            <phase>process-test-classes</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <configuration>
+              <includeTestSourceDirectory>true</includeTestSourceDirectory>
+              <logViolationsToConsole>true</logViolationsToConsole>
+              <checkstyleRules>
+                <module name="Checker">
+                  <!-- Checks for Size Violations.                    -->
+                  <!-- See http://checkstyle.sf.net/config_sizes.html -->
+                  <module name="FileLength">
+                    <property name="max" value="3500" />
+                    <property name="fileExtensions" value="java"/>
+                  </module>
+                  <!-- Checks for whitespace                               -->
+                  <!-- See http://checkstyle.sf.net/config_whitespace.html -->
+                  <module name="FileTabCharacter"/>
+                </module>
+              </checkstyleRules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- run findbugs check -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>findbugs-maven-plugin</artifactId>
+        <version>3.0.3</version>
+        <executions>
+          <execution>
+            <phase>process-test-classes</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <effort>Max</effort>
+          <includeTests>true</includeTests>
+          <threshold>Low</threshold>
+          <xmlOutput>true</xmlOutput>
+          <failOnError>false</failOnError>
+        </configuration>
+      </plugin>
+
+      <!-- run PMD check -->
+      <plugin>
+        <artifactId>maven-pmd-plugin</artifactId>
+        <version>3.6</version>
+        <configuration>
+          <verbose>true</verbose>
+          <linkXRef>false</linkXRef>
+          <failOnViolation>false</failOnViolation>
+          <rulesets>
+              <!-- The 5 standard rulesets -->
+              <ruleset>/rulesets/java/basic.xml</ruleset>
+              <ruleset>/rulesets/java/empty.xml</ruleset>
+              <ruleset>/rulesets/java/imports.xml</ruleset>
+              <ruleset>/rulesets/java/unnecessary.xml</ruleset>
+              <ruleset>/rulesets/java/unusedcode.xml</ruleset>
+
+              <!-- Additional rulesets, see https://pmd.github.io/pmd-5.5.1/pmd-java/rules/index.html -->
+              <ruleset>/rulesets/java/braces.xml</ruleset>
+              <ruleset>/rulesets/java/finalizers.xml</ruleset>
+          </rulesets>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>process-test-classes</phase>
+            <goals>
+              <goal>check</goal>
+              <goal>cpd-check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>2.0.2</version>
         <configuration>
-          <source>1.6</source>
-          <target>1.6</target>
+          <source>1.7</source>
+          <target>1.7</target>
         </configuration>
       </plugin>
       <plugin>
@@ -147,7 +239,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
-	<version>2.5.5</version>
+        <version>2.5.5</version>
         <executions>
           <execution>
             <id>assemble-all</id>
@@ -213,3 +305,4 @@
     </extensions>
   </build>
 </project>
+<!-- vim: set sw=2 ts=2 et: -->
