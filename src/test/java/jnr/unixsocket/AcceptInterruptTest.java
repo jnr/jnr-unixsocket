@@ -12,14 +12,12 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
-public class AcceptInterruptTest
-{
-	@Test
-    public void testAcceptCloseInterrupt() throws Exception
-    {
-    	File file = File.createTempFile("test", ".sock");
-    	file.delete();
-    	file.deleteOnExit();
+public class AcceptInterruptTest {
+    @Test
+    public void testAcceptCloseInterrupt() throws Exception {
+        File file = File.createTempFile("test", ".sock");
+        file.delete();
+        file.deleteOnExit();
         
         final UnixServerSocketChannel channel = UnixServerSocketChannel.open();
         channel.socket().bind(new UnixSocketAddress(file));
@@ -43,12 +41,11 @@ public class AcceptInterruptTest
         Assert.assertTrue(complete.await(5,TimeUnit.SECONDS));
     }
 
-	@Test
-    public void testAcceptInterrupt() throws Exception
-    {
-    	File file = File.createTempFile("test", ".sock");
-    	file.delete();
-    	file.deleteOnExit();
+    @Test
+    public void testAcceptInterrupt() throws Exception {
+        File file = File.createTempFile("test", ".sock");
+        file.delete();
+        file.deleteOnExit();
         
         final UnixServerSocketChannel channel = UnixServerSocketChannel.open();
         channel.socket().bind(new UnixSocketAddress(file));
@@ -68,51 +65,42 @@ public class AcceptInterruptTest
         
         accept.interrupt();
         Assert.assertTrue(complete.await(5,TimeUnit.SECONDS));
-        
     }
-	
-	
-	private final class Acceptor extends Thread {
-		private final CountDownLatch complete;
-		private final CountDownLatch start;
-		private final UnixServerSocketChannel channel;
-		private final AtomicBoolean run;
+        
+    private final class Acceptor extends Thread {
+	private final CountDownLatch complete;
+	private final CountDownLatch start;
+	private final UnixServerSocketChannel channel;
+	private final AtomicBoolean run;
 
-		private Acceptor(CountDownLatch complete, CountDownLatch start, UnixServerSocketChannel channel,
-				AtomicBoolean run) {
-			this.complete = complete;
-			this.start = start;
-			this.channel = channel;
-			this.run = run;
-		}
-
-		@Override public void run()
-		{
-		    try
-		    {
-		        while(run.get())
-		        {
-		        	if (start.getCount()>0)
-		                start.countDown();
-		            try
-		            {
-		                channel.accept();
-		                System.err.println("accepted");
-		            }
-		            catch (IOException e)
-		            {
-		                e.printStackTrace();
-		            }
-		            finally
-		            {
-		                System.err.println("finally");
-		            }
-		        }
-		    }
-		    finally
-		    {
-		        complete.countDown();
-		    }
-		}
+	private Acceptor(CountDownLatch complete, CountDownLatch start, UnixServerSocketChannel channel,
+			AtomicBoolean run) {
+	    this.complete = complete;
+	    this.start = start;
+	    this.channel = channel;
+	    this.run = run;
 	}
+
+	@Override public void run() {
+	    try {
+		while(run.get()) {
+		    if (start.getCount()>0)
+			start.countDown();
+		    try {
+			channel.accept();
+			System.err.println("accepted");
+		    }
+		    catch (IOException e) {
+			e.printStackTrace();
+		    }
+		    finally {
+			System.err.println("finally");
+		    }
+		}
+	    }
+	    finally {
+		complete.countDown();
+	    }
+	}
+    }
 }
