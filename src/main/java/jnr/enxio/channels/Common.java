@@ -101,7 +101,13 @@ final class Common {
         int n = Native.write(_fd, buffer);
 
         if (n < 0) {
-            throw new IOException(Native.getLastErrorString());
+            switch (Native.getLastError()) {
+                case EAGAIN:
+                case EWOULDBLOCK:
+                    return 0;
+            default:
+                throw new IOException(Native.getLastErrorString());
+            }
         }
 
         return n;
