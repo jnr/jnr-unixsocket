@@ -117,7 +117,7 @@ public class UnixDatagramChannel extends AbstractNativeDatagramChannel {
     public boolean isConnected() {
         stateLock.readLock().lock();
         boolean isConnected = state == State.CONNECTED;
-        stateLock.readLock().lock();
+        stateLock.readLock().unlock();
         return isConnected;
     }
 
