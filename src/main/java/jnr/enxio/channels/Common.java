@@ -124,7 +124,11 @@ final class Common {
         int index = 0;
 
         for (index = offset; index < length; index++) {
-            result += write(srcs[index]);
+            int wanted = srcs[index].remaining();
+            int n = write(srcs[index]);
+            result += n;
+            if (wanted != n)
+                break;
         }
 
         return result;
