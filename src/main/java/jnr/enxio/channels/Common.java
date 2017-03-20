@@ -127,8 +127,9 @@ final class Common {
             int wanted = srcs[index].remaining();
             int n = write(srcs[index]);
             result += n;
-            if (wanted != n)
+            if (wanted != n) {
                 break;
+            }
         }
 
         return result;
