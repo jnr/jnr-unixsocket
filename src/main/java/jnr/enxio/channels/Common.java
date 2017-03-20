@@ -92,11 +92,13 @@ final class Common {
 
     int write(ByteBuffer src) throws IOException {
 
+        int pos = src.position();
         ByteBuffer buffer = ByteBuffer.allocate(src.remaining());
 
         buffer.put(src);
 
         buffer.position(0);
+        src.position(pos);
 
         int n = Native.write(_fd, buffer);
 
@@ -108,6 +110,8 @@ final class Common {
             default:
                 throw new IOException(Native.getLastErrorString());
             }
+        } else if (n > 0) {
+            src.position(pos + n);
         }
 
         return n;
