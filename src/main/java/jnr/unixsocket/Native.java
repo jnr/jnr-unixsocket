@@ -88,7 +88,7 @@ class Native {
         return INSTANCE;
     }
 
-    static int socket(ProtocolFamily domain, Sock type, int protocol) throws IOException {
+    public static int socket(ProtocolFamily domain, Sock type, int protocol) throws IOException {
         int fd = libsocket().socket(domain.intValue(), type.intValue(), protocol);
         if (fd < 0) {
             throw new IOException(getLastErrorString());
@@ -96,38 +96,38 @@ class Native {
         return fd;
     }
 
-    static int socketpair(ProtocolFamily domain, Sock type, int protocol, int[] sv) throws IOException {
+    public static int socketpair(ProtocolFamily domain, Sock type, int protocol, int[] sv) throws IOException {
         if (libsocket().socketpair(domain.intValue(), type.intValue(), protocol, sv) < 0) {
             throw new IOException("socketpair(2) failed " + Native.getLastErrorString());
         }
         return 0;
     }
 
-    static int listen(int fd, int backlog) {
+    public static int listen(int fd, int backlog) {
         return libsocket().listen(fd, backlog);
     }
 
-    static int bind(int fd, SockAddrUnix addr, int len) {
+    public static int bind(int fd, SockAddrUnix addr, int len) {
         return libsocket().bind(fd, addr, len);
     }
 
-    static int accept(int fd, SockAddrUnix addr, IntByReference len) {
+    public static int accept(int fd, SockAddrUnix addr, IntByReference len) {
         return libsocket().accept(fd, addr, len);
     }
 
-    static int connect(int fd, SockAddrUnix addr, int len) {
+    public static int connect(int fd, SockAddrUnix addr, int len) {
         return libsocket().connect(fd, addr, len);
     }
 
-    static String getLastErrorString() {
+    public static String getLastErrorString() {
         return strerror(LastError.getLastError(Runtime.getSystemRuntime()));
     }
 
-    static Errno getLastError() {
+    public static Errno getLastError() {
         return Errno.valueOf(LastError.getLastError(Runtime.getSystemRuntime()));
     }
 
-    static String strerror(int error) {
+    public static String strerror(int error) {
         return libc().strerror(error);
     }
 
