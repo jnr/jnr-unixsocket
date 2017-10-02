@@ -58,6 +58,10 @@ public class UnixDatagramChannel extends AbstractNativeDatagramChannel {
         return new UnixDatagramChannel();
     }
 
+    public static final UnixDatagramChannel open(ProtocolFamily domain, int protocol) throws IOException {
+        return new UnixDatagramChannel(domain, protocol);
+    }
+
     public static final UnixDatagramChannel[] pair() throws IOException {
         int[] sockets = { -1, -1 };
         Native.socketpair(ProtocolFamily.PF_UNIX, Sock.SOCK_DGRAM, 0, sockets);
@@ -69,6 +73,11 @@ public class UnixDatagramChannel extends AbstractNativeDatagramChannel {
 
     private UnixDatagramChannel() throws IOException {
         this(Native.socket(ProtocolFamily.PF_UNIX, Sock.SOCK_DGRAM, 0));
+    }
+
+    UnixDatagramChannel(ProtocolFamily domain, int protocol) throws IOException
+    {
+        this(Native.socket(domain, Sock.SOCK_DGRAM, protocol));
     }
 
     UnixDatagramChannel(int fd) {
