@@ -44,13 +44,19 @@ final class Common {
 
     int read(ByteBuffer dst) throws IOException {
 
-        ByteBuffer buffer = ByteBuffer.allocate(dst.remaining());
+        int n;
+        if (!dst.hasArray() && !dst.isDirect()) {
+            ByteBuffer buffer = ByteBuffer.allocate(dst.remaining());
 
-        int n = Native.read(_fd, buffer);
+            n = Native.read(_fd, buffer);
 
-        buffer.flip();
+            buffer.flip();
 
-        dst.put(buffer);
+            dst.put(buffer);
+        } else {
+            n = Native.read(_fd, dst);
+        }
+
 
         switch (n) {
             case 0:
@@ -92,13 +98,18 @@ final class Common {
 
     int write(ByteBuffer src) throws IOException {
 
-        ByteBuffer buffer = ByteBuffer.allocate(src.remaining());
+        int n;
+        if (!src.hasArray() && !src.isDirect()) {
+            ByteBuffer buffer = ByteBuffer.allocate(src.remaining());
 
-        buffer.put(src);
+            buffer.put(src);
 
-        buffer.position(0);
+            buffer.position(0);
 
-        int n = Native.write(_fd, buffer);
+            n = Native.write(_fd, buffer);
+        } else {
+            n = Native.write(_fd, src);
+        }
 
         if (n < 0) {
             switch (Native.getLastError()) {
