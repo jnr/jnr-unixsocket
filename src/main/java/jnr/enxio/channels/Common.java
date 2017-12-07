@@ -92,18 +92,25 @@ final class Common {
 
     int write(ByteBuffer src) throws IOException {
 
-        ByteBuffer buffer = ByteBuffer.allocate(src.remaining());
-
+        int r = src.remaining();
+        
+        ByteBuffer buffer = ByteBuffer.allocate(r);
+        
         buffer.put(src);
-
+        
         buffer.position(0);
 
         int n = Native.write(_fd, buffer);
 
-        if (n < 0) {
+        if (n >=0 ) {
+            if (n < r) {
+                src.position(src.position()-(r-n));
+            }
+        } else {
             switch (Native.getLastError()) {
                 case EAGAIN:
                 case EWOULDBLOCK:
+                    src.position(src.position()-r);
                     return 0;
             default:
                 throw new IOException(Native.getLastErrorString());
