@@ -152,7 +152,7 @@ class Native {
             return libsocket().setsockopt(s, level.intValue(), optname.intValue(), t, DefaultNativeTimeval.size(t));
         } else {
             ByteBuffer buf = ByteBuffer.allocate(4);
-            buf.order(ByteOrder.BIG_ENDIAN);
+            buf.order(ByteOrder.nativeOrder());
             buf.putInt(optval).flip();
             return libsocket().setsockopt(s, level.intValue(), optname.intValue(), buf, buf.remaining());
         }
@@ -167,7 +167,7 @@ class Native {
             return (t.tv_sec.intValue() * 1000 + t.tv_usec.intValue() / 1000);
         } else {
             ByteBuffer buf = ByteBuffer.allocate(4);
-            buf.order(ByteOrder.BIG_ENDIAN);
+            buf.order(ByteOrder.nativeOrder());
             ref = new IntByReference(4);
             Native.libsocket().getsockopt(s, level.intValue(), optname, buf, ref);
             return buf.getInt();
