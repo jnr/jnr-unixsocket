@@ -59,19 +59,19 @@
     <dependency>
       <groupId>com.github.jnr</groupId>
       <artifactId>jnr-constants</artifactId>
-      <version>0.9.8</version>
+      <version>0.9.9</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.github.jnr</groupId>
       <artifactId>jnr-enxio</artifactId>
-      <version>0.16</version>
+      <version>0.17</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.github.jnr</groupId>
       <artifactId>jnr-posix</artifactId>
-      <version>3.0.35</version>
+      <version>3.0.45</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>
