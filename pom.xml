@@ -10,7 +10,7 @@
   <groupId>com.github.jnr</groupId>
   <artifactId>jnr-unixsocket</artifactId>
   <packaging>jar</packaging>
-  <version>0.19</version>
+  <version>0.20-SNAPSHOT</version>
   <name>jnr-unixsocket</name>
   <description>Native I/O access for java</description>
   <url>http://github.com/jnr/jnr-unixsocket</url>
