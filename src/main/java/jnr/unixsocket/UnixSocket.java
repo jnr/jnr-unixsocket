@@ -82,7 +82,7 @@ public class UnixSocket extends java.net.Socket {
     }
 
     @Override
-    public void connect(SocketAddress addr, Integer timeout) throws IOException {
+    public void connect(SocketAddress addr, int timeout) throws IOException {
         if (addr instanceof UnixSocketAddress) {
             chan.connect((UnixSocketAddress) addr);
         } else {
