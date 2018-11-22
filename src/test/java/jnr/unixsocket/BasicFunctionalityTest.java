@@ -1,23 +1,24 @@
 
 package jnr.unixsocket;
 
-import jnr.enxio.channels.NativeSelectorProvider;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static junit.framework.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
+import java.nio.channels.AlreadyBoundException;
 import java.nio.channels.Channels;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import jnr.enxio.channels.NativeSelectorProvider;
 
 import org.junit.Test;
-
-import static junit.framework.Assert.*;
 
 public class BasicFunctionalityTest {
     private static final File SOCKADDR = new File("/tmp/jnr-unixsocket-test" + System.currentTimeMillis() + ".sock");
@@ -27,6 +28,32 @@ public class BasicFunctionalityTest {
 
     private Thread server;
     private volatile Exception serverException;
+    
+    @Test
+    public void doubleBindTest() throws Exception {
+        UnixSocketChannel ch = UnixSocketChannel.open().bind(null);
+        try {
+            ch.bind(null);
+            fail("Should have thrown AlreadyBoundException");
+        } catch (AlreadyBoundException abx) {
+            try {
+                ch.socket().bind(null);
+                fail("Should have thrown SocketException");
+            } catch (SocketException sx) {
+                assertEquals("exception message", sx.getMessage(), "already bound");
+            }
+        }
+    }
+    
+    @Test
+    public void pairTest() throws Exception {
+        UnixSocketChannel[] sp = UnixSocketChannel.pair();
+        for (final UnixSocketChannel ch : sp) {
+            assertTrue("Channel is connected", ch.isConnected());
+            assertTrue("Channel is bound", ch.isBound());
+            assertFalse("Channel's socket is not closed", ch.socket().isClosed());
+        }
+    }
 
     @Test
     public void basicOperation() throws Exception {
@@ -69,9 +96,9 @@ public class BasicFunctionalityTest {
 
         assertEquals(ADDRESS, channel2.getRemoteSocketAddress());
 
-        Channels.newOutputStream(channel2).write(DATA.getBytes());
+        Channels.newOutputStream(channel2).write(DATA.getBytes(UTF_8));
 
-        InputStreamReader r = new InputStreamReader(Channels.newInputStream(channel2));
+        InputStreamReader r = new InputStreamReader(Channels.newInputStream(channel2), UTF_8);
         CharBuffer result = CharBuffer.allocate(1024);
         r.read(result);
 
@@ -105,9 +132,8 @@ public class BasicFunctionalityTest {
                     // nonblocking result
                     return false;
                 }
-                // TODO: This doesn't work for some reason.
-//                assertEquals(ADDRESS, client.getLocalSocketAddress());
-//                assertEquals("", client.getRemoteSocketAddress().getStruct().getPath());
+                assertEquals(ADDRESS, client.getLocalSocketAddress());
+                assertEquals("", client.getRemoteSocketAddress().getStruct().getPath());
 
                 client.configureBlocking(false);
                 client.register(selector, SelectionKey.OP_READ, new ClientActor(client));
@@ -130,11 +156,10 @@ public class BasicFunctionalityTest {
             try {
                 ByteBuffer buf = ByteBuffer.allocate(1024);
                 int n = channel.read(buf);
-                // TODO: This doesn't work for some reason.
-//                assertEquals(ADDRESS, channel.getRemoteSocketAddress());
+                assertEquals("", channel.getRemoteSocketAddress().getStruct().getPath());
 
                 assertEquals(DATA.length(), n);
-                
+
                 if (n > 0) {
                     buf.flip();
                     channel.write(buf);
