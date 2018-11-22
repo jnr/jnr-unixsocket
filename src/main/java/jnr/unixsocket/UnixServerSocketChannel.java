@@ -54,13 +54,13 @@ public class UnixServerSocketChannel extends NativeServerSocketChannel {
         int maxLength = addr.getMaximumLength();
         IntByReference len = new IntByReference(maxLength);
 
-    	int clientfd=-1;
+        int clientfd=-1;
         try {
-        	begin();
+            begin();
             clientfd = Native.accept(getFD(), addr, len);
         }
         finally {
-        	end(clientfd>=0);
+            end(clientfd>=0);
         }
 
         if (clientfd < 0) {
