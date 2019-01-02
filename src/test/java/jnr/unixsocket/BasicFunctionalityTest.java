@@ -1,10 +1,10 @@
 
 package jnr.unixsocket;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static junit.framework.Assert.*;
+import jnr.enxio.channels.NativeSelectorProvider;
+import org.junit.After;
+import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.SocketException;
@@ -16,19 +16,25 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.util.Set;
 
-import jnr.enxio.channels.NativeSelectorProvider;
-
-import org.junit.Test;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class BasicFunctionalityTest {
-    private static final File SOCKADDR = new File("/tmp/jnr-unixsocket-test" + System.currentTimeMillis() + ".sock");
-    static { SOCKADDR.deleteOnExit(); }
-    private static final UnixSocketAddress ADDRESS = new UnixSocketAddress(SOCKADDR);
     private static final String DATA = "blah blah";
 
+    private final UnixSocketPair socketPair = new UnixSocketPair();
     private Thread server;
     private volatile Exception serverException;
-    
+
+    @After
+    public void tearDown() throws Exception {
+        socketPair.close();
+    }
+
     @Test
     public void doubleBindTest() throws Exception {
         UnixSocketChannel ch = UnixSocketChannel.open().bind(null);
@@ -44,7 +50,7 @@ public class BasicFunctionalityTest {
             }
         }
     }
-    
+
     @Test
     public void pairTest() throws Exception {
         UnixSocketChannel[] sp = UnixSocketChannel.pair();
@@ -61,7 +67,7 @@ public class BasicFunctionalityTest {
         final UnixServerSocketChannel channel = UnixServerSocketChannel.open();
         final Selector sel = NativeSelectorProvider.getInstance().openSelector();
         channel.configureBlocking(false);
-        channel.socket().bind(ADDRESS);
+        channel.socket().bind(socketPair.socketAddress());
         channel.register(sel, SelectionKey.OP_ACCEPT, new ServerActor(channel, sel));
 
         // TODO: This is ugly but simple enough. Many failures on server side will cause client to hang.
@@ -92,9 +98,9 @@ public class BasicFunctionalityTest {
         server.start();
 
         // client logic
-        UnixSocketChannel channel2 = UnixSocketChannel.open(ADDRESS);
+        UnixSocketChannel channel2 = UnixSocketChannel.open(socketPair.socketAddress());
 
-        assertEquals(ADDRESS, channel2.getRemoteSocketAddress());
+        assertEquals(socketPair.socketAddress(), channel2.getRemoteSocketAddress());
 
         Channels.newOutputStream(channel2).write(DATA.getBytes(UTF_8));
 
@@ -132,7 +138,7 @@ public class BasicFunctionalityTest {
                     // nonblocking result
                     return false;
                 }
-                assertEquals(ADDRESS, client.getLocalSocketAddress());
+                assertEquals(socketPair.socketAddress(), client.getLocalSocketAddress());
                 assertEquals("", client.getRemoteSocketAddress().getStruct().getPath());
 
                 client.configureBlocking(false);
