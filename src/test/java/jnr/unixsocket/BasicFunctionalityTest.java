@@ -3,6 +3,7 @@ package jnr.unixsocket;
 
 import jnr.enxio.channels.NativeSelectorProvider;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -26,9 +27,14 @@ import static org.junit.Assert.fail;
 public class BasicFunctionalityTest {
     private static final String DATA = "blah blah";
 
-    private final UnixSocketPair socketPair = new UnixSocketPair();
+    private UnixSocketPair socketPair;
     private Thread server;
     private volatile Exception serverException;
+
+    @Before
+    public void setUp() throws Exception {
+        socketPair = new UnixSocketPair();
+    }
 
     @After
     public void tearDown() throws Exception {
