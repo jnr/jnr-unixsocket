@@ -81,7 +81,8 @@ public class UnixSocket extends java.net.Socket {
         connect(addr, 0);
     }
 
-    public void connect(SocketAddress addr, Integer timeout) throws IOException {
+    @Override
+    public void connect(SocketAddress addr, int timeout) throws IOException {
         if (addr instanceof UnixSocketAddress) {
             chan.connect((UnixSocketAddress) addr);
         } else {
@@ -101,6 +102,7 @@ public class UnixSocket extends java.net.Socket {
         return null;
     }
 
+    @Override
     public InputStream getInputStream() throws IOException {
         if (chan.isConnected()) {
             return in;
