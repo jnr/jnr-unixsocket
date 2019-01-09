@@ -3,15 +3,28 @@ package jnr.unixsocket;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.SocketAddress;
+import java.nio.channels.SelectableChannel;
 import java.nio.channels.SocketChannel;
 
 /**
  * A TCP or UNIX socket pair for testing.
  */
 abstract class TestSocketPair implements Closeable {
-    abstract void connectBlocking() throws IOException;
+    void connectBlocking() throws IOException {
+        serverBind();
+        clientConnect();
+        serverAccept();
+    }
+
+    abstract void serverBind() throws IOException;
+
+    abstract void serverAccept() throws IOException;
+
+    abstract void clientConnect() throws IOException;
 
     abstract SocketAddress socketAddress();
+
+    abstract SelectableChannel serverSocketChannel();
 
     abstract SocketChannel serverChannel();
 
@@ -28,6 +41,6 @@ abstract class TestSocketPair implements Closeable {
     }
 
     abstract static class Factory {
-        abstract TestSocketPair createUnconnected();
+        abstract TestSocketPair createUnconnected() throws IOException;
     }
 }

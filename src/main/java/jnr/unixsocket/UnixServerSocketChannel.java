@@ -20,17 +20,22 @@ package jnr.unixsocket;
 
 import jnr.constants.platform.ProtocolFamily;
 import jnr.constants.platform.Sock;
-import jnr.enxio.channels.NativeServerSocketChannel;
+import jnr.enxio.channels.AbstractNativeServerSocketChannel;
 import jnr.ffi.byref.IntByReference;
 
 import java.io.IOException;
+import java.nio.channels.ClosedChannelException;
+import java.nio.channels.NotYetBoundException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.spi.SelectorProvider;
+
+import static jnr.unixsocket.Native.getLastError;
+import static jnr.unixsocket.Native.getLastErrorString;
 
 /**
  *
  */
-public class UnixServerSocketChannel extends NativeServerSocketChannel {
+public class UnixServerSocketChannel extends AbstractNativeServerSocketChannel {
 
     private final UnixServerSocket socket;
 
@@ -54,11 +59,24 @@ public class UnixServerSocketChannel extends NativeServerSocketChannel {
         int maxLength = addr.getMaximumLength();
         IntByReference len = new IntByReference(maxLength);
 
-        int clientfd = Native.accept(getFD(), addr, len);
+        int clientfd = -1;
+        begin();
+        try {
+            clientfd = Native.accept(getFD(), addr, len);
+        } finally {
+            end(clientfd >= 0);
+        }
 
         if (clientfd < 0) {
             if (isBlocking()) {
-                throw new IOException("accept failed: " + Native.getLastErrorString());
+                switch (getLastError()) {
+                    case EBADF:
+                        throw new ClosedChannelException();
+                    case EINVAL:
+                        throw new NotYetBoundException();
+                    default:
+                        throw new IOException("accept failed: " + getLastErrorString());
+                }
             }
 
             return null;

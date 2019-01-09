@@ -7,7 +7,7 @@ import java.util.UUID;
 class UnixSocketPair extends TestSocketPair {
     static final Factory FACTORY = new Factory() {
         @Override
-        TestSocketPair createUnconnected() {
+        TestSocketPair createUnconnected() throws IOException {
             return new UnixSocketPair();
         }
     };
@@ -19,23 +19,33 @@ class UnixSocketPair extends TestSocketPair {
     private UnixSocketChannel serverChannel;
     private UnixSocketChannel clientChannel;
 
-    UnixSocketPair() {
+    UnixSocketPair() throws IOException {
         file = new File("/tmp/jnr-unixsocket-test" + UUID.randomUUID() + ".sock");
         address = new UnixSocketAddress(file);
+        serverSocketChannel = UnixServerSocketChannel.open();
     }
 
     @Override
-    void connectBlocking() throws IOException {
-        if (serverSocketChannel != null || serverChannel != null || clientChannel != null) {
+    void serverBind() throws IOException {
+        serverSocketChannel.configureBlocking(true);
+        serverSocketChannel.socket().bind(address);
+    }
+
+    @Override
+    void clientConnect() throws IOException {
+        if (clientChannel != null) {
             throw new IllegalStateException("already connected");
         }
 
-        serverSocketChannel = UnixServerSocketChannel.open();
-        serverSocketChannel.configureBlocking(true);
-        serverSocketChannel.socket().bind(address);
-
         clientChannel = UnixSocketChannel.open();
         clientChannel.connect(new UnixSocketAddress(file));
+    }
+
+    @Override
+    void serverAccept() throws IOException {
+        if (serverChannel != null) {
+            throw new IllegalStateException("already accepted");
+        }
 
         serverChannel = serverSocketChannel.accept();
     }
@@ -43,6 +53,11 @@ class UnixSocketPair extends TestSocketPair {
     @Override
     UnixSocketAddress socketAddress() {
         return address;
+    }
+
+    @Override
+    UnixServerSocketChannel serverSocketChannel() {
+        return serverSocketChannel;
     }
 
     @Override
