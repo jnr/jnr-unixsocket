@@ -3,25 +3,28 @@ package jnr.unixsocket;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.SocketAddress;
-import java.nio.channels.SelectableChannel;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 
-class TcpSocketPair extends TestSocketPair {
+/**
+ * TCP sockets created with the java.nio channels APIs.
+ */
+class TcpChannelsApiSocketPair extends TestSocketPair {
     static final Factory FACTORY = new Factory() {
         @Override
         TestSocketPair createUnconnected() throws IOException {
-            return new TcpSocketPair();
+            return new TcpChannelsApiSocketPair();
         }
     };
 
-    private ServerSocketChannel serverSocketChannel;
+    private final ServerSocketChannel serverSocketChannel;
     private InetSocketAddress serverAddress;
     private SocketChannel serverChannel;
     private SocketChannel clientChannel;
 
-    TcpSocketPair() throws IOException {
+    TcpChannelsApiSocketPair() throws IOException {
         serverSocketChannel = ServerSocketChannel.open();
     }
 
@@ -63,18 +66,13 @@ class TcpSocketPair extends TestSocketPair {
     }
 
     @Override
-    SelectableChannel serverSocketChannel() {
-        return serverSocketChannel;
+    Socket server() {
+        return serverChannel.socket();
     }
 
     @Override
-    SocketChannel serverChannel() {
-        return serverChannel;
-    }
-
-    @Override
-    SocketChannel clientChannel() {
-        return clientChannel;
+    Socket client() {
+        return clientChannel.socket();
     }
 
     @Override

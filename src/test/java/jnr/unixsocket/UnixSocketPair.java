@@ -2,6 +2,7 @@ package jnr.unixsocket;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.Socket;
 import java.util.UUID;
 
 class UnixSocketPair extends TestSocketPair {
@@ -56,18 +57,13 @@ class UnixSocketPair extends TestSocketPair {
     }
 
     @Override
-    UnixServerSocketChannel serverSocketChannel() {
-        return serverSocketChannel;
+    Socket server() {
+        return serverChannel.socket();
     }
 
     @Override
-    UnixSocketChannel serverChannel() {
-        return serverChannel;
-    }
-
-    @Override
-    UnixSocketChannel clientChannel() {
-        return clientChannel;
+    Socket client() {
+        return clientChannel.socket();
     }
 
     @Override
