@@ -157,6 +157,8 @@ final class Common {
         wMap.put(UnixSocketOptions.SO_RCVTIMEO, jnr.constants.platform.SocketOption.SO_RCVTIMEO);
         wMap.put(UnixSocketOptions.SO_SNDTIMEO, jnr.constants.platform.SocketOption.SO_SNDTIMEO);
         wMap.put(UnixSocketOptions.SO_KEEPALIVE, jnr.constants.platform.SocketOption.SO_KEEPALIVE);
+        wMap.put(UnixSocketOptions.SO_PASSCRED, jnr.constants.platform.SocketOption.SO_PASSCRED);
+        
         rMap.putAll(wMap);
         rMap.put(UnixSocketOptions.SO_PEERCRED, jnr.constants.platform.SocketOption.SO_PEERCRED);
     }

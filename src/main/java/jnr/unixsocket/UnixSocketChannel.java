@@ -287,6 +287,7 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
             set.add(UnixSocketOptions.SO_RCVTIMEO);
             set.add(UnixSocketOptions.SO_PEERCRED);
             set.add(UnixSocketOptions.SO_KEEPALIVE);
+            set.add(UnixSocketOptions.SO_PASSCRED);
             return Collections.unmodifiableSet(set);
         }
     }
