@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.SocketException;
 import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.ClosedChannelException;
@@ -28,6 +29,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * Confirm that UNIX sockets work similarly to TCP sockets.
@@ -46,7 +48,8 @@ public class SocketInteropTest {
     public static List<Object[]> parameters() {
         return Arrays.asList(
                 new Object[] { UnixSocketPair.FACTORY },
-                new Object[] { TcpSocketPair.FACTORY }
+                new Object[] { TcpSocketsApiSocketPair.FACTORY },
+                new Object[] { TcpChannelsApiSocketPair.FACTORY }
         );
     }
 
@@ -64,11 +67,11 @@ public class SocketInteropTest {
     public void serverWritesAndClientReads() throws IOException {
         socketPair.connectBlocking();
 
-        OutputStream serverOut = socketPair.serverChannel().socket().getOutputStream();
+        OutputStream serverOut = socketPair.server().getOutputStream();
         serverOut.write("message from server to client\n".getBytes(UTF_8));
         serverOut.flush();
 
-        InputStream clientIn = socketPair.clientChannel().socket().getInputStream();
+        InputStream clientIn = socketPair.client().getInputStream();
         BufferedReader reader = new BufferedReader(new InputStreamReader(clientIn, UTF_8));
         assertEquals("message from server to client", reader.readLine());
     }
@@ -77,11 +80,11 @@ public class SocketInteropTest {
     public void clientWritesAndServerReads() throws IOException {
         socketPair.connectBlocking();
 
-        OutputStream clientOut = socketPair.clientChannel().socket().getOutputStream();
+        OutputStream clientOut = socketPair.client().getOutputStream();
         clientOut.write("message from client to server\n".getBytes(UTF_8));
         clientOut.flush();
 
-        InputStream serverIn = socketPair.serverChannel().socket().getInputStream();
+        InputStream serverIn = socketPair.server().getInputStream();
         BufferedReader reader = new BufferedReader(new InputStreamReader(serverIn, UTF_8));
         assertEquals("message from client to server", reader.readLine());
     }
@@ -92,28 +95,37 @@ public class SocketInteropTest {
             socketPair.serverAccept();
             fail();
         } catch (NotYetBoundException expected) {
+            // Thrown by channels APIs.
+        } catch (SocketException expected) {
+            // Thrown by sockets APIs.
         }
     }
 
     @Test
     public void acceptThrowsWhenServerSocketIsClosed() throws IOException {
         socketPair.serverBind();
-        socketPair.serverSocketChannel().close();
+        socketPair.close();
         try {
             socketPair.serverAccept();
             fail();
         } catch (ClosedChannelException expected) {
+            // Thrown by channels APIs.
+        } catch (SocketException expected) {
+            // Thrown by sockets APIs.
         }
     }
 
     @Test
     public void acceptThrowsWhenServerSocketIsAsynchronouslyClosed() throws IOException {
         socketPair.serverBind();
-        closeLater(socketPair.serverSocketChannel(), 500, TimeUnit.MILLISECONDS);
+        closeLater(socketPair, 500, TimeUnit.MILLISECONDS);
         try {
             socketPair.serverAccept();
             fail();
         } catch (AsynchronousCloseException expected) {
+            // Thrown by channels APIs.
+        } catch (SocketException expected) {
+            // Thrown by sockets APIs.
         }
     }
 
@@ -132,6 +144,10 @@ public class SocketInteropTest {
 
     @Test
     public void acceptThrowsWhenAcceptingThreadIsInterrupted() throws IOException {
+        // https://bugs.openjdk.java.net/browse/JDK-4386498
+        assumeTrue("the TCP sockets API doesn't support Thread.interrupt()",
+                socketPairFactory != TcpSocketsApiSocketPair.FACTORY);
+
         socketPair.serverBind();
         interruptLater(Thread.currentThread(), 500, TimeUnit.MILLISECONDS);
         try {
@@ -154,5 +170,43 @@ public class SocketInteropTest {
                 }
             }
         }.start();
+    }
+
+    @Test
+    public void concurrentReadAndWrite() throws IOException {
+        // https://bugs.openjdk.java.net/browse/JDK-4774871
+        assumeTrue("the TCP channels API doesn't support concurrent read and write",
+                socketPairFactory != TcpChannelsApiSocketPair.FACTORY);
+
+        socketPair.connectBlocking();
+
+        // This thread runs later. It writes messages on each socket.
+        new Thread(getClass().getName() + ".concurrentReadAndWrite") {
+            @Override
+            public void run() {
+                try {
+                    // Sleep to guarantee that the reads are in-flight before the writes are attempted.
+                    Thread.sleep(500);
+
+                    OutputStream clientOut = socketPair.client().getOutputStream();
+                    clientOut.write("message from client to server\n".getBytes(UTF_8));
+                    clientOut.flush();
+
+                    OutputStream serverOut = socketPair.server().getOutputStream();
+                    serverOut.write("message from server to client\n".getBytes(UTF_8));
+                    serverOut.flush();
+                } catch (InterruptedException | IOException ignored) {
+                }
+            }
+        }.start();
+
+        // This thread runs earlier. It reads messages on each socket.
+        InputStream clientIn = socketPair.client().getInputStream();
+        BufferedReader clientReader = new BufferedReader(new InputStreamReader(clientIn, UTF_8));
+        assertEquals("message from server to client", clientReader.readLine());
+
+        InputStream serverIn = socketPair.server().getInputStream();
+        BufferedReader serverReader = new BufferedReader(new InputStreamReader(serverIn, UTF_8));
+        assertEquals("message from client to server", serverReader.readLine());
     }
 }
