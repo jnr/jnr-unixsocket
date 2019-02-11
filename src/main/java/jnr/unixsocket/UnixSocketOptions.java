@@ -73,5 +73,11 @@ public final class UnixSocketOptions {
     public static final SocketOption<Credentials> SO_PEERCRED =
         new GenericOption<Credentials>("SO_PEERCRED", Credentials.class);
 
+    /**
+     * Enable credential transmission.
+     */
+    public static final SocketOption<Boolean> SO_PASSCRED =
+        new GenericOption<Boolean>("SO_PASSCRED", Boolean.class);
+
 }
 
