@@ -65,7 +65,7 @@
     <dependency>
       <groupId>com.github.jnr</groupId>
       <artifactId>jnr-enxio</artifactId>
-      <version>0.19</version>
+      <version>0.20</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -180,6 +180,7 @@
           <instructions>
             <_nouses>true</_nouses>
             <Import-Package>*,jnr.ffi.mapper,jnr.ffi.provider.converters,jnr.ffi.provider.jffi,com.kenai.jffi</Import-Package>
+            <Automatic-Module-Name>jnr.unixsocket</Automatic-Module-Name>
           </instructions>
         </configuration>
         <executions>

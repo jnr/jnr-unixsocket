@@ -35,7 +35,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import jnr.constants.platform.Errno;
 import jnr.constants.platform.ProtocolFamily;
 import jnr.constants.platform.Sock;
-import jnr.enxio.channels.AbstractNativeSocketChannel;
+import jnr.unixsocket.impl.AbstractNativeSocketChannel;
 import jnr.ffi.LastError;
 
 /**

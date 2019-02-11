@@ -16,12 +16,13 @@
  * limitations under the License.
  */
 
-package jnr.enxio.channels;
+package jnr.unixsocket.impl;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import jnr.constants.platform.Errno;
+import jnr.enxio.channels.Native;
 
 /**
  * Helper class, providing common methods.

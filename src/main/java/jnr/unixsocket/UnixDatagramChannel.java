@@ -40,7 +40,7 @@ import java.util.Set;
 
 import jnr.constants.platform.ProtocolFamily;
 import jnr.constants.platform.Sock;
-import jnr.enxio.channels.AbstractNativeDatagramChannel;
+import jnr.unixsocket.impl.AbstractNativeDatagramChannel;
 
 public class UnixDatagramChannel extends AbstractNativeDatagramChannel {
     static enum State {

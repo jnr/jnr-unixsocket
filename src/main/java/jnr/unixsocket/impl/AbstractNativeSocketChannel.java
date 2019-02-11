@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Fritz Elfert
+ * Copyright (C) 2016 Marcus Linke
  *
  * This file is part of the JNR project.
  *
@@ -16,24 +16,29 @@
  * limitations under the License.
  */
 
-package jnr.enxio.channels;
+package jnr.unixsocket.impl;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
-import java.nio.channels.DatagramChannel;
+import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 
-public abstract class AbstractNativeDatagramChannel extends DatagramChannel
+import jnr.constants.platform.Shutdown;
+import jnr.enxio.channels.Native;
+import jnr.enxio.channels.NativeSelectableChannel;
+import jnr.enxio.channels.NativeSelectorProvider;
+
+public abstract class AbstractNativeSocketChannel extends SocketChannel
     implements ByteChannel, NativeSelectableChannel {
 
     private final Common common;
 
-    public AbstractNativeDatagramChannel(int fd) {
+    public AbstractNativeSocketChannel(int fd) {
         this(NativeSelectorProvider.getInstance(), fd);
     }
 
-    AbstractNativeDatagramChannel(SelectorProvider provider, int fd) {
+    AbstractNativeSocketChannel(SelectorProvider provider, int fd) {
         super(provider);
         common = new Common(fd);
     }
@@ -76,4 +81,24 @@ public abstract class AbstractNativeDatagramChannel extends DatagramChannel
         return common.write(srcs, offset, length);
     }
 
+    @Override
+    public SocketChannel shutdownInput() throws IOException {
+        int n = Native.shutdown(common.getFD(), SHUT_RD);
+        if (n < 0) {
+            throw new IOException(Native.getLastErrorString());
+        }
+        return this;
+    }
+
+    @Override
+    public SocketChannel shutdownOutput() throws IOException {
+        int n = Native.shutdown(common.getFD(), SHUT_WR);
+        if (n < 0) {
+            throw new IOException(Native.getLastErrorString());
+        }
+        return this;
+    }
+
+    private static final int SHUT_RD = Shutdown.SHUT_RD.intValue();
+    private static final int SHUT_WR = Shutdown.SHUT_WR.intValue();
 }

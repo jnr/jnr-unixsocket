@@ -16,9 +16,11 @@
  * limitations under the License.
  */
 
-package jnr.enxio.channels;
+package jnr.unixsocket.impl;
 
 import jnr.constants.platform.Shutdown;
+import jnr.enxio.channels.Native;
+import jnr.enxio.channels.NativeServerSocketChannel;
 
 import java.io.IOException;
 import java.nio.channels.spi.SelectorProvider;

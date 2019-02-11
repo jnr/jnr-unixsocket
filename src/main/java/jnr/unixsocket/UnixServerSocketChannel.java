@@ -20,7 +20,7 @@ package jnr.unixsocket;
 
 import jnr.constants.platform.ProtocolFamily;
 import jnr.constants.platform.Sock;
-import jnr.enxio.channels.AbstractNativeServerSocketChannel;
+import jnr.unixsocket.impl.AbstractNativeServerSocketChannel;
 import jnr.ffi.byref.IntByReference;
 
 import java.io.IOException;
