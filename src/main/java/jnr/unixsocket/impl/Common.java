@@ -128,7 +128,14 @@ final class Common {
         for (int index = offset; index < length; ++index) {
             ByteBuffer buffer = srcs[index];
             int remaining = buffer.remaining();
-            int written = write(buffer);
+            int written = 0;
+            while (true) {
+                int w = write(buffer);
+                written += w;
+                if (w == 0 || written == remaining) {
+                    break;
+                }
+            }
             result += written;
             if (written < remaining) {
                 break;
