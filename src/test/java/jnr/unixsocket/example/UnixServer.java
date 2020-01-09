@@ -106,7 +106,7 @@ public class UnixServer {
                 ByteBuffer buf = ByteBuffer.allocate(1024);
                 int n = channel.read(buf);
                 UnixSocketAddress remote = channel.getRemoteSocketAddress();
-                System.out.printf("Read in %d bytes from %s\n", n, remote);
+                System.out.printf("Read in %d bytes from %s%n", n, remote);
 
                 if (n > 0) {
                     buf.flip();
