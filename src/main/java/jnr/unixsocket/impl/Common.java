@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 
 import jnr.constants.platform.Errno;
 import jnr.enxio.channels.Native;
+import jnr.enxio.channels.NativeException;
 
 /**
  * Helper class, providing common methods.
@@ -65,7 +66,7 @@ final class Common {
                         return 0;
 
                     default:
-                        throw new IOException(Native.getLastErrorString());
+                        throw new NativeException(Native.getLastErrorString(), lastError);
                 }
 
             default: {
@@ -108,27 +109,39 @@ final class Common {
                 src.position(src.position()-(r-n));
             }
         } else {
-            switch (Native.getLastError()) {
+            Errno lastError = Native.getLastError();
+            switch (lastError) {
                 case EAGAIN:
                 case EWOULDBLOCK:
                     src.position(src.position()-r);
                     return 0;
             default:
-                throw new IOException(Native.getLastErrorString());
+                throw new NativeException(Native.getLastErrorString(), lastError);
             }
         }
 
         return n;
     }
 
-    long write(ByteBuffer[] srcs, int offset, int length)
-        throws IOException {
+    long write(ByteBuffer[] srcs, int offset, int length) throws IOException {
 
         long result = 0;
-        int index = 0;
 
-        for (index = offset; index < length; index++) {
-            result += write(srcs[index]);
+        for (int index = offset; index < length; ++index) {
+            ByteBuffer buffer = srcs[index];
+            int remaining = buffer.remaining();
+            int written = 0;
+            while (true) {
+                int w = write(buffer);
+                written += w;
+                if (w == 0 || written == remaining) {
+                    break;
+                }
+            }
+            result += written;
+            if (written < remaining) {
+                break;
+            }
         }
 
         return result;

@@ -27,6 +27,7 @@ import java.nio.channels.spi.SelectorProvider;
 import jnr.constants.platform.Errno;
 import jnr.constants.platform.Shutdown;
 import jnr.enxio.channels.Native;
+import jnr.enxio.channels.NativeException;
 import jnr.enxio.channels.NativeSelectableChannel;
 import jnr.enxio.channels.NativeSelectorProvider;
 
@@ -91,7 +92,7 @@ public abstract class AbstractNativeSocketChannel extends SocketChannel
     public SocketChannel shutdownInput() throws IOException {
         int n = Native.shutdown(common.getFD(), SHUT_RD);
         if (n < 0 && Native.getLastError() != Errno.ENOTCONN) {
-            throw new IOException(Native.getLastErrorString());
+            throw new NativeException(Native.getLastErrorString(), Native.getLastError());
         }
         return this;
     }
@@ -100,7 +101,7 @@ public abstract class AbstractNativeSocketChannel extends SocketChannel
     public SocketChannel shutdownOutput() throws IOException {
         int n = Native.shutdown(common.getFD(), SHUT_WR);
         if (n < 0 && Native.getLastError() != Errno.ENOTCONN) {
-            throw new IOException(Native.getLastErrorString());
+            throw new NativeException(Native.getLastErrorString(), Native.getLastError());
         }
         return this;
     }
