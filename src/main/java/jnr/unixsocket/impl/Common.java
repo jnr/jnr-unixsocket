@@ -123,14 +123,25 @@ final class Common {
         return n;
     }
 
-    long write(ByteBuffer[] srcs, int offset, int length)
-        throws IOException {
+    long write(ByteBuffer[] srcs, int offset, int length) throws IOException {
 
         long result = 0;
-        int index = 0;
 
-        for (index = offset; index < length; index++) {
-            result += write(srcs[index]);
+        for (int index = offset; index < length; ++index) {
+            ByteBuffer buffer = srcs[index];
+            int remaining = buffer.remaining();
+            int written = 0;
+            while (true) {
+                int w = write(buffer);
+                written += w;
+                if (w == 0 || written == remaining) {
+                    break;
+                }
+            }
+            result += written;
+            if (written < remaining) {
+                break;
+            }
         }
 
         return result;
