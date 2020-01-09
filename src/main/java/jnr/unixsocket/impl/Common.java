@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 
 import jnr.constants.platform.Errno;
 import jnr.enxio.channels.Native;
+import jnr.enxio.channels.NativeException;
 
 /**
  * Helper class, providing common methods.
@@ -65,7 +66,7 @@ final class Common {
                         return 0;
 
                     default:
-                        throw new IOException(Native.getLastErrorString());
+                        throw new NativeException(Native.getLastErrorString(), lastError);
                 }
 
             default: {
@@ -108,13 +109,14 @@ final class Common {
                 src.position(src.position()-(r-n));
             }
         } else {
-            switch (Native.getLastError()) {
+            Errno lastError = Native.getLastError();
+            switch (lastError) {
                 case EAGAIN:
                 case EWOULDBLOCK:
                     src.position(src.position()-r);
                     return 0;
             default:
-                throw new IOException(Native.getLastErrorString());
+                throw new NativeException(Native.getLastErrorString(), lastError);
             }
         }
 
