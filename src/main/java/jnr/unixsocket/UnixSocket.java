@@ -117,12 +117,7 @@ public class UnixSocket extends java.net.Socket {
 
     @Override
     public SocketAddress getLocalSocketAddress() {
-        UnixSocketAddress address = chan.getLocalSocketAddress();
-        if (address != null) {
-            return address;
-        } else {
-            return null;
-        }
+        return chan.getLocalSocketAddress();
     }
 
     @Override

@@ -109,12 +109,20 @@
         </executions>
       </plugin>
 
-      <!-- run findbugs check -->
+      <!-- run spotbugs check -->
       <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>findbugs-maven-plugin</artifactId>
-        <version>3.0.3</version>
-        <executions>
+        <groupId>com.github.spotbugs</groupId>
+        <artifactId>spotbugs-maven-plugin</artifactId>
+        <version>3.1.12.2</version>
+        <dependencies>
+          <!-- overwrite dependency on spotbugs if you want to specify the version of spotbugs -->
+          <dependency>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs</artifactId>
+            <version>4.0.0-beta4</version>
+          </dependency>
+        </dependencies>
+         <executions>
           <execution>
             <phase>process-test-classes</phase>
             <goals>
@@ -124,9 +132,9 @@
         </executions>
         <configuration>
           <effort>Max</effort>
-          <includeTests>true</includeTests>
-          <threshold>Low</threshold>
-          <xmlOutput>true</xmlOutput>
+          <includeTests>false</includeTests>
+          <relaxed>true</relaxed>
+          <spotbugsXmlOutput>true</spotbugsXmlOutput>
           <failOnError>false</failOnError>
         </configuration>
       </plugin>

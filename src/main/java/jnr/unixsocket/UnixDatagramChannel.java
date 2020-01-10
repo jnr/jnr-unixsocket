@@ -87,9 +87,12 @@ public class UnixDatagramChannel extends AbstractNativeDatagramChannel {
     UnixDatagramChannel(int fd, State initialState, boolean initialBoundState) {
         super(fd);
         stateLock.writeLock().lock();
-        state = initialState;
-        bindHandler = new BindHandler(initialBoundState);
-        stateLock.writeLock().unlock();
+        try {
+            state = initialState;
+            bindHandler = new BindHandler(initialBoundState);
+        } finally {
+            stateLock.writeLock().unlock();
+        }
     }
 
     UnixDatagramChannel(int fd, UnixSocketAddress remote) throws IOException {

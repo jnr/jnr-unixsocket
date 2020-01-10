@@ -80,7 +80,7 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
     public static final UnixSocketChannel[] pair() throws IOException {
         int[] sockets = { -1, -1 };
         Native.socketpair(ProtocolFamily.PF_UNIX, Sock.SOCK_STREAM, 0, sockets);
-        return new UnixSocketChannel[] { 
+        return new UnixSocketChannel[] {
                 new UnixSocketChannel(sockets[0], State.CONNECTED, true),
                 new UnixSocketChannel(sockets[1], State.CONNECTED, true) };
     }
@@ -100,7 +100,7 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
     UnixSocketChannel() throws IOException {
         this(Native.socket(ProtocolFamily.PF_UNIX, Sock.SOCK_STREAM, 0));
     }
-    
+
     UnixSocketChannel(int fd) {
         this(fd, State.CONNECTED, false);
     }
@@ -108,9 +108,12 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
     UnixSocketChannel(int fd, State initialState, boolean initialBoundState) {
         super(fd);
         stateLock.writeLock().lock();
-        state = initialState;
-        bindHandler = new BindHandler(initialBoundState);
-        stateLock.writeLock().unlock();
+        try {
+            state = initialState;
+            bindHandler = new BindHandler(initialBoundState);
+        } finally {
+            stateLock.writeLock().unlock();
+        }
     }
 
     private boolean doConnect(SockAddrUnix remote) throws IOException {
@@ -146,7 +149,7 @@ public class UnixSocketChannel extends AbstractNativeSocketChannel {
             return true;
         }
     }
-    
+
     boolean isBound() {
         return bindHandler.isBound();
     }
