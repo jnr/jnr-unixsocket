@@ -104,16 +104,19 @@ public class UnixServer {
         public final boolean rxready() {
             try {
                 ByteBuffer buf = ByteBuffer.allocate(1024);
-                int n = channel.read(buf);
-                UnixSocketAddress remote = channel.getRemoteSocketAddress();
-                System.out.printf("Read in %d bytes from %s%n", n, remote);
+                int n;
 
-                if (n > 0) {
-                    buf.flip();
-                    channel.write(buf);
-                    return true;
-                } else if (n < 0) {
-                    return false;
+                while ((n = channel.read(buf)) > 0) {
+                    UnixSocketAddress remote = channel.getRemoteSocketAddress();
+                    System.out.printf("Read in %d bytes from %s%n", n, remote);
+
+                    if (n > 0) {
+                        buf.flip();
+                        channel.write(buf);
+                        buf.clear();
+                    } else if (n < 0) {
+                        return false;
+                    }
                 }
 
             } catch (IOException ex) {
