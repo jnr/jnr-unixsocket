@@ -12,7 +12,7 @@
   <packaging>jar</packaging>
   <version>0.38.0-SNAPSHOT</version>
   <name>jnr-unixsocket</name>
-  <description>Native I/O access for java</description>
+  <description>UNIX socket channels for java</description>
   <url>http://github.com/jnr/jnr-unixsocket</url>
 
   <licenses>
