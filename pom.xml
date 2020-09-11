@@ -305,6 +305,11 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.1</version>
+      </plugin>
     </plugins>
     <extensions>
       <extension>
@@ -313,5 +318,26 @@
       </extension>
     </extensions>
   </build>
+
+  <profiles>
+    <profile>
+      <id>java9</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+              <!-- Use -release compiler option rather than source/target if 9+ -->
+              <release>${maven.compiler.target}</release>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+      <activation>
+        <jdk>[9,)</jdk>
+      </activation>
+    </profile>
+  </profiles>
 </project>
 <!-- vim: set sw=2 ts=2 et: -->
