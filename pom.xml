@@ -10,7 +10,7 @@
   <groupId>com.github.jnr</groupId>
   <artifactId>jnr-unixsocket</artifactId>
   <packaging>jar</packaging>
-  <version>0.38.19</version>
+  <version>0.38.20-SNAPSHOT</version>
   <name>jnr-unixsocket</name>
   <description>UNIX socket channels for java</description>
   <url>http://github.com/jnr/jnr-unixsocket</url>
