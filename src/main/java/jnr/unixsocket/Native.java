@@ -39,8 +39,8 @@ import jnr.ffi.annotations.Transient;
 import jnr.ffi.byref.IntByReference;
 import jnr.ffi.types.size_t;
 import jnr.ffi.types.ssize_t;
-import jnr.posix.DefaultNativeTimeval;
-import jnr.posix.Timeval;
+import jnr.unixsocket.posix.DefaultNativeTimeval;
+import jnr.unixsocket.posix.Timeval;
 
 class Native {
     static final String[] libnames = Platform.getNativePlatform().getOS() == Platform.OS.SOLARIS

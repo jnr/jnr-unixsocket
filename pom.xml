@@ -74,12 +74,6 @@
       <version>0.32.16</version>
       <scope>compile</scope>
     </dependency>
-    <dependency>
-      <groupId>com.github.jnr</groupId>
-      <artifactId>jnr-posix</artifactId>
-      <version>3.1.18</version>
-      <scope>compile</scope>
-    </dependency>
   </dependencies>
   <build>
     <plugins>
