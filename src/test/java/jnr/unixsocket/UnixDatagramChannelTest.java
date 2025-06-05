@@ -102,7 +102,7 @@ public class UnixDatagramChannelTest {
         long startTime = System.nanoTime();
         readThread.start();
         readStartLatch.await();
-        Thread.sleep(100); // Wait for the thread to call read()
+        Thread.sleep(100); // Wait for the thread to call receive()
         ch.close();
         readThread.join();
         long stopTime = System.nanoTime();
