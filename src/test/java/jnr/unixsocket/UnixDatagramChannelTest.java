@@ -1,7 +1,11 @@
 package jnr.unixsocket;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 import org.junit.Test;
@@ -64,6 +68,50 @@ public class UnixDatagramChannelTest {
         UnixDatagramChannel ch = UnixDatagramChannel.open();
         ch.bind(a);
         assertEquals("local socket path", ABSTRACT, ch.getLocalSocketAddress().path());
+    }
+
+    @Test
+    public void testInterruptRead() throws Exception {
+        int readTimeoutInMilliseconds = 5000;
+
+        UnixDatagramChannel ch = UnixDatagramChannel.open();
+        ch.bind(null);
+
+        CountDownLatch readStartLatch = new CountDownLatch(1);
+        AtomicReference<IOException> thrownOnThread = new AtomicReference<IOException>();
+
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    readStartLatch.countDown();
+                    ByteBuffer buffer = ByteBuffer.allocate(1 << 16);
+                    ch.receive(buffer);
+                } catch (IOException e) {
+                    if (!e.getMessage().equals("Bad file descriptor")) {
+                        thrownOnThread.set(e);
+                    }
+                }
+             }
+        };
+
+        Thread readThread = new Thread(runnable);
+
+        readThread.setDaemon(true);
+
+        long startTime = System.nanoTime();
+        readThread.start();
+        readStartLatch.await();
+        Thread.sleep(100); // Wait for the thread to call read()
+        ch.close();
+        readThread.join();
+        long stopTime = System.nanoTime();
+
+        long duration = stopTime - startTime;
+        long durationInMilliseconds = duration / 1_000_000;
+
+        assertTrue("read() was not interrupted by close() before read() timed out", durationInMilliseconds < readTimeoutInMilliseconds);
+        assertEquals("read() threw an exception", null, thrownOnThread.get());
     }
 
 }
