@@ -18,6 +18,7 @@
 
 package jnr.unixsocket.impl;
 
+import jnr.constants.platform.Shutdown;
 import jnr.enxio.channels.Native;
 import jnr.enxio.channels.NativeSelectableChannel;
 import jnr.enxio.channels.NativeSelectorProvider;
@@ -52,6 +53,8 @@ public abstract class AbstractNativeDatagramChannel extends DatagramChannel
 
     @Override
     protected void implCloseSelectableChannel() throws IOException {
+        // Shutdown to interrupt any potentially blocked threads. This is necessary on Linux.
+        Native.shutdown(getFD(), SHUT_RD);
         Native.close(common.getFD());
     }
 
@@ -80,4 +83,5 @@ public abstract class AbstractNativeDatagramChannel extends DatagramChannel
         return common.write(srcs, offset, length);
     }
 
+    private static final int SHUT_RD = Shutdown.SHUT_RD.intValue();
 }
