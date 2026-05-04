@@ -217,6 +217,10 @@ class Native {
             n = libsocket().recvfrom(fd, dst, dst.remaining(), 0, addr, addrlen);
         } while (n < 0 && Errno.EINTR.equals(getLastError()));
 
+        if (n >= 0 && addr != null && addrlen != null) {
+            addr.updatePath(addrlen.getValue());
+        }
+
         if (n > 0) {
             dst.position(dst.position() + n);
         }
