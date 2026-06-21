@@ -5,7 +5,6 @@
     <groupId>com.github.jnr</groupId>
     <artifactId>jnr-parent</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <relativePath>../pom.xml</relativePath>
   </parent>
 
   <artifactId>jnr-unixsocket</artifactId>
@@ -43,12 +42,6 @@
     </developer>
   </developers>
 
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>8</maven.compiler.source>
-    <maven.compiler.target>8</maven.compiler.target>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
@@ -83,20 +76,6 @@
   </dependencies>
   <build>
     <plugins>
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>org.sonatype.central</groupId>
-        <artifactId>central-publishing-maven-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <artifactId>maven-javadoc-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <artifactId>maven-source-plugin</artifactId>
-      </plugin>
-
       <!-- run checkstyle check -->
       <plugin>
         <artifactId>maven-checkstyle-plugin</artifactId>
@@ -185,7 +164,6 @@
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
-        <version>6.0.2</version>
         <configuration>
           <instructions>
             <_nouses>true</_nouses>
@@ -205,7 +183,6 @@
       </plugin>
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>2.3.1</version>
         <configuration>
           <archive>
             <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
@@ -214,14 +191,6 @@
             </manifestEntries>
           </archive>
         </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>jar</goal>
-              <goal>test-jar</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -242,49 +211,6 @@
           </execution>
         </executions>
       </plugin>
-<!--
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>1.4.0</version>
-        <executions>
-          <execution>
-            <id>pre-execute</id>
-            <phase>pre-integration-test</phase>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <configuration>
-              <executable>${project.basedir}/src/test/resources/background.sh</executable>
-              <arguments>
-                <arg>java -cp target/${project.artifactId}-${project.version}-jar-with-dependencies.jar:target/${project.artifactId}-${project.version}-tests.jar jnr.unixsocket.example.UnixServer</arg>
-              </arguments>
-              <successCodes>
-                <successCode>0</successCode>
-              </successCodes>
-            </configuration>
-          </execution>
-          <execution>
-            <id>execute</id>
-            <phase>integration-test</phase>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <configuration>
-              <executable>java</executable>
-              <arguments>
-                <arg>-cp</arg>
-                <arg>target/${project.artifactId}-${project.version}-jar-with-dependencies.jar:target/${project.artifactId}-${project.version}-tests.jar</arg>
-                <arg>jnr.unixsocket.example.UnixClient</arg>
-              </arguments>
-              <successCodes>
-                <successCode>0</successCode>
-              </successCodes>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
--->
     </plugins>
     <extensions>
       <extension>
@@ -293,17 +219,5 @@
       </extension>
     </extensions>
   </build>
-
-  <profiles>
-    <profile>
-      <id>java9</id>
-      <activation>
-        <jdk>[9,)</jdk>
-      </activation>
-      <properties>
-        <maven.compiler.release>8</maven.compiler.release>
-      </properties>
-    </profile>
-  </profiles>
 </project>
 <!-- vim: set sw=2 ts=2 et: -->
