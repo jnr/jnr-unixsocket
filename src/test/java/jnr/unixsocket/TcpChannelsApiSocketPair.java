@@ -1,7 +1,6 @@
 package jnr.unixsocket;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -37,9 +36,9 @@ class TcpChannelsApiSocketPair extends TestSocketPair {
 
         ServerSocket serverSocket = serverSocketChannel.socket();
         serverSocket.setReuseAddress(true);
-        serverSocketChannel.bind(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0));
+        serverSocketChannel.bind(new InetSocketAddress(0));
         serverSocketChannel.configureBlocking(true);
-        serverAddress = new InetSocketAddress(InetAddress.getLoopbackAddress(), serverSocket.getLocalPort());
+        serverAddress = new InetSocketAddress(serverSocket.getInetAddress(), serverSocket.getLocalPort());
     }
 
     @Override
