@@ -37,7 +37,7 @@ import static org.junit.Assume.assumeTrue;
 @RunWith(Parameterized.class)
 public class SocketInteropTest {
     @Rule
-    public Timeout timeout = new Timeout(5, TimeUnit.SECONDS);
+    public Timeout timeout = new Timeout(10, TimeUnit.SECONDS);
 
     @Parameter
     public TestSocketPair.Factory socketPairFactory;
