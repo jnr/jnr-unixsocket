@@ -101,6 +101,8 @@ abstract class SockAddrUnix extends Struct {
                     cachedPath = cachedPath.substring(0, slen);
                 }
             }
+            // Sync the struct field with the normalized cachedPath
+            getPathField().set(cachedPath);
         }
     }
 
