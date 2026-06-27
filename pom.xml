@@ -10,7 +10,7 @@
 
   <artifactId>jnr-unixsocket</artifactId>
   <packaging>jar</packaging>
-  <version>0.39.1-SNAPSHOT</version>
+  <version>0.39.1</version>
   <name>jnr-unixsocket</name>
   <description>UNIX socket channels for java</description>
   <url>http://github.com/jnr/jnr-unixsocket</url>
@@ -71,7 +71,7 @@
     <dependency>
       <groupId>com.github.jnr</groupId>
       <artifactId>jnr-posix</artifactId>
-      <version>3.2.0</version>
+      <version>3.2.1</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>
