@@ -84,7 +84,10 @@ abstract class SockAddrUnix extends Struct {
      * @param len the value of the addrlen var, set by the above syscalls.
      */
     void updatePath(final int len) {
-        if (currentOS == OS.LINUX) {
+        int slen = len - HEADER_LENGTH;
+        if (slen <= 0) {
+            cachedPath = "";
+        } else if (currentOS == OS.LINUX) {
             // Linux always returns an accurate length in
             // order to support abstract namespace, where
             // path STARTS with a NUL byte.
@@ -93,13 +96,8 @@ abstract class SockAddrUnix extends Struct {
             // All others might return a len > 0 (typically 14) AND the path is terminated
             // by a NUL byte if it is shorter than sizeof(sun_path)
             cachedPath = getPathField().get();
-            int slen = len - HEADER_LENGTH;
-            if (slen <= 0) {
-                cachedPath = "";
-            } else {
-                if (slen < getPathField().length() && slen < cachedPath.length()) {
-                    cachedPath = cachedPath.substring(0, slen);
-                }
+            if (slen < getPathField().length() && slen < cachedPath.length()) {
+                cachedPath = cachedPath.substring(0, slen);
             }
             // Sync the struct field with the normalized cachedPath
             getPathField().set(cachedPath);
