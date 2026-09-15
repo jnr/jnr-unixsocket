@@ -10,7 +10,7 @@
 
   <artifactId>jnr-unixsocket</artifactId>
   <packaging>jar</packaging>
-  <version>0.39.5-SNAPSHOT</version>
+  <version>0.39.5</version>
   <name>jnr-unixsocket</name>
   <description>UNIX socket channels for java</description>
   <url>http://github.com/jnr/jnr-unixsocket</url>
@@ -54,25 +54,25 @@
     <dependency>
       <groupId>com.github.jnr</groupId>
       <artifactId>jnr-ffi</artifactId>
-      <version>2.3.2</version>
+      <version>2.3.3</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.github.jnr</groupId>
       <artifactId>jnr-constants</artifactId>
-      <version>0.11.1</version>
+      <version>0.11.2</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.github.jnr</groupId>
       <artifactId>jnr-enxio</artifactId>
-      <version>0.33.2</version>
+      <version>0.33.3</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.github.jnr</groupId>
       <artifactId>jnr-posix</artifactId>
-      <version>3.2.3</version>
+      <version>3.2.4</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>
