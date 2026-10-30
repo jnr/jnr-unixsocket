@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.github.jnr</groupId>
     <artifactId>jnr-parent</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.3</version>
     <relativePath />
   </parent>
 
@@ -42,6 +42,11 @@
       <email>fritz-github@fritz-elfert.de</email>
       <timezone>Europe/Berlin</timezone>
     </developer>
+    <developer>
+      <id>headius</id>
+      <name>Charles Oliver Nutter</name>
+      <email>headius@headius.com</email>
+    </developer>
   </developers>
 
   <dependencies>
@@ -54,25 +59,25 @@
     <dependency>
       <groupId>com.github.jnr</groupId>
       <artifactId>jnr-ffi</artifactId>
-      <version>2.3.4</version>
+      <version>2.3.6</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.github.jnr</groupId>
       <artifactId>jnr-constants</artifactId>
-      <version>0.11.2</version>
+      <version>0.11.3</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.github.jnr</groupId>
       <artifactId>jnr-enxio</artifactId>
-      <version>0.33.4</version>
+      <version>0.33.5</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.github.jnr</groupId>
       <artifactId>jnr-posix</artifactId>
-      <version>3.2.5</version>
+      <version>3.2.6</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>
